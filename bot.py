@@ -8,7 +8,7 @@ from datetime import datetime
 
 # discord
 import discord
-from discord.ext import tasks, commands
+from discord.ext import tasks
 
 # discordgsm
 from bin import *
@@ -45,7 +45,13 @@ CUSTOM_IMAGE_URL = os.getenv('CUSTOM_IMAGE_URL', SETTINGS.get('image_url', ''))
 REFRESH_RATE = int(os.getenv('REFRESH_RATE', SETTINGS['refreshrate'])) if int(os.getenv('REFRESH_RATE', SETTINGS['refreshrate'])) > 5 else 5
 PRESENCE_TYPE = int(os.getenv('PRESENCE_TYPE', SETTINGS.get('presence_type', 3)))
 PRESENCE_RATE = int(os.getenv('PRESENCE_RATE', SETTINGS.get('presence_rate', 5))) if int(os.getenv('PRESENCE_RATE', SETTINGS.get('presence_rate', 5))) > 1 else 1
+
 FIELD_STATUS = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
+FIELD_TITLE = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
+FIELD_LOCK = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
+FIELD_PASSWORD = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
+FIELD_MAP = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
+FIELD_MAP = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
 FIELD_ADDRESS = os.getenv("FIELD_ADDRESS", SETTINGS["fieldname"]["address"])
 FIELD_PORT = os.getenv("FIELD_PORT", SETTINGS["fieldname"]["port"])
 FIELD_GAME = os.getenv("FIELD_GAME", SETTINGS["fieldname"]["game"])
@@ -286,96 +292,7 @@ class DiscordGSM():
     def get_server_list(self):
         return self.server_list
 
-bot = commands.Bot(command_prefix=DGSM_PREFIX)
-
-# command: dgsm
-# display dgsm informations
-@bot.command(name='dgsm', aliases=['discordgsm'], brief='Display DiscordGSM\'s informations')
-@commands.check_any(commands.has_role(ROLE_ID), commands.is_owner())
-async def _dgsm(ctx):
-    title = f'Command: {DGSM_PREFIX}dgsm'
-    description = f'Thanks for using Discord Game Server Monitor ([DiscordGSM](https://github.com/DiscordGSM/DiscordGSM))\n'
-    description += f'\nUseful commands:\n{DGSM_PREFIX}servers - Display the server list'
-    description += f'\n{DGSM_PREFIX}serversrefresh - Refresh the server list'
-    description += f'\n{DGSM_PREFIX}getserversjson - get servers.json file'
-    description += f'\n{DGSM_PREFIX}setserversjson - set servers.json file'
-    color = discord.Color.from_rgb(114, 137, 218) # discord theme color
-    embed = discord.Embed(title=title, description=description, color=color)
-    embed.add_field(name='Support server', value='https://discord.gg/Cg4Au9T', inline=True)
-    embed.add_field(name='Github', value='https://github.com/DiscordGSM/DiscordGSM', inline=True)
-    await ctx.send(embed=embed)
-
-# command: serversrefresh
-# refresh the server list
-@bot.command(name='serversrefresh', brief='Refresh the server list')
-@commands.check_any(commands.has_role(ROLE_ID), commands.is_owner())
-async def _serversrefresh(ctx):
-    # refresh discord servers list
-    await discordgsm.refresh_discord_embed()
-    discordgsm.print_to_console('Server list refreshed')
-
-    # send response
-    title = f'Command: {DGSM_PREFIX}serversrefresh'
-    color = discord.Color.from_rgb(114, 137, 218) # discord theme color
-    embed = discord.Embed(title=title, description=f'Servers list refreshed', color=color)
-    await ctx.send(embed=embed)
-
-# command: servers
-# list all the servers in configs/servers.json
-@bot.command(name='servers', brief='List all the servers in servers.json')
-@commands.check_any(commands.has_role(ROLE_ID), commands.is_owner())
-async def _servers(ctx):
-    title = f'Command: {DGSM_PREFIX}servers'
-    color = discord.Color.from_rgb(114, 137, 218) # discord theme color
-    embed = discord.Embed(title=title, color=color)
-    type, addr_port, channel = '', '', ''
-    servers = discordgsm.get_server_list()
-
-    for i in range(len(servers)):
-        type += f'`{i+1}`. {servers[i]["type"]}\n'
-        addr_port += f'`{servers[i]["addr"]}:{servers[i]["port"]}`\n'
-        channel += f'`{servers[i]["channel"]}`\n'
-
-    embed.add_field(name='ID. Type', value=type, inline=True)
-    embed.add_field(name='Address:Port', value=addr_port, inline=True)
-    embed.add_field(name='Channel ID', value=channel, inline=True)
-    await ctx.send(embed=embed)
-
-# command: getserversjson
-# get configs/servers.json
-@bot.command(name='getserversjson', brief='Get servers.json file')
-@commands.check_any(commands.has_role(ROLE_ID), commands.is_owner())
-async def _getserversjson(ctx):
-    await ctx.send(file=discord.File('configs/servers.json'))
-
-# command: setserversjson
-# set configs/servers.json
-@bot.command(name='setserversjson', brief='Set servers.json file')
-@commands.check_any(commands.has_role(ROLE_ID), commands.is_owner())
-async def _setserversjson(ctx, *args):
-    title = f'Command: {DGSM_PREFIX}setserversjson'
-    color = discord.Color.from_rgb(114, 137, 218) # discord theme color
-
-    if len(args) == 1:
-        url = args[0]
-        r = requests.get(url)
-        with open('configs/servers.json', 'wb') as file:
-            file.write(r.content)
-
-        description = f'File servers.json uploaded'
-        embed = discord.Embed(title=title, description=description, color=color)
-        await ctx.send(embed=embed)
-        return
-
-    description = f'Usage: {DGSM_PREFIX}setserversjson <url>\nRemark: <url> is the servers.json download url'
-    embed = discord.Embed(title=title, description=description, color=color)
-    await ctx.send(embed=embed)
-
-# error handling on Missing Role
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CheckAnyFailure):
-        await ctx.send("You don't have access to this command!", delete_after=10.0)
+bot = discord.Client()
 
 discordgsm = DiscordGSM(bot)
 discordgsm.start()
