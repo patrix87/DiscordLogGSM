@@ -1,18 +1,16 @@
-[
-    {
-        "title": "Minecraft Vanilla",
-        "lock": true,
-        "password": "",
-        "map" : false,
-        "type": "GamedigQuery",
-        "game": "minecraft",
-        "addr": "mc.bucherons.ca",
-        "port": 25565,
-        "publicaddress": "mc.bucherons.ca:25565",
-        "channel": 680969817200656387,
-        "country": "CA",
-        "color": "#5b8731",
-        "image_url" : "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/93/Grass_Block_JE7_BE6.png",
-        "custom" : "Envoyez un DM à @patrix pour être ajouté à la AllowList"
-    }
-]
+[{
+    "title": "Minecraft Vanilla",
+    "lock": true,
+    "password": "",
+    "showmap": false,
+    "type": "GamedigQuery",
+    "game": "minecraft",
+    "addr": "mc.bucherons.ca",
+    "port": 25565,
+    "publicaddress": "mc.bucherons.ca:25565",
+    "channel": 727204264358838272,
+    "country": "CA",
+    "color": "#5b8731",
+    "image_url": "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/93/Grass_Block_JE7_BE6.png",
+    "custom": "Envoyez un DM à @patrix pour être ajouté à la AllowList"
+}]

@@ -1,9 +1,6 @@
 import os
 import time
 import urllib
-import asyncio
-import requests
-import subprocess
 from datetime import datetime
 
 # discord
@@ -11,65 +8,22 @@ import discord
 from discord.ext import tasks
 
 # discordgsm
-from bin import *
 from servers import Servers, ServerCache
-from settings import Settings
 
-# [HEROKU] get and load servers json from SERVERS_JSON env directly
-servers_json = os.getenv('SERVERS_JSON')
-if servers_json and servers_json.strip():
-    with open('configs/servers.json', 'w') as file:
-        file.write(servers_json)
+#load env
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# [HEROKU] Check bot token and servers.json valid before start
-if 'DGSM_TOKEN' in os.environ:
-    invite_link = subprocess.run(['python3', 'getbotinvitelink.py'], stdout=subprocess.PIPE, shell=False).stdout.decode('utf8')
-    if 'https://discord.com/api/oauth2/authorize?client_id=' not in invite_link:
-        while True:
-            time.sleep(1)
-    with open('configs/servers.json', 'r') as file:
-        try:
-            Servers().get()
-        except Exception as e:
-            print(e)
-            while True:
-                time.sleep(1)
-
-# env values
-VERSION = '1.8.3'
-SETTINGS = Settings.get()
-DGSM_TOKEN = os.getenv('DGSM_TOKEN', SETTINGS['token'])
-DGSM_PREFIX = os.getenv("DGSM_PREFIX", SETTINGS.get('prefix', '!'))
-ROLE_ID = os.getenv('ROLE_ID', SETTINGS.get('role_id', '123'))
-CUSTOM_IMAGE_URL = os.getenv('CUSTOM_IMAGE_URL', SETTINGS.get('image_url', ''))
-REFRESH_RATE = int(os.getenv('REFRESH_RATE', SETTINGS['refreshrate'])) if int(os.getenv('REFRESH_RATE', SETTINGS['refreshrate'])) > 5 else 5
-PRESENCE_TYPE = int(os.getenv('PRESENCE_TYPE', SETTINGS.get('presence_type', 3)))
-PRESENCE_RATE = int(os.getenv('PRESENCE_RATE', SETTINGS.get('presence_rate', 5))) if int(os.getenv('PRESENCE_RATE', SETTINGS.get('presence_rate', 5))) > 1 else 1
-
-FIELD_STATUS = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
-FIELD_TITLE = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
-FIELD_LOCK = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
-FIELD_PASSWORD = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
-FIELD_MAP = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
-FIELD_MAP = os.getenv("FIELD_STATUS", SETTINGS["fieldname"]["status"])
-FIELD_ADDRESS = os.getenv("FIELD_ADDRESS", SETTINGS["fieldname"]["address"])
-FIELD_PORT = os.getenv("FIELD_PORT", SETTINGS["fieldname"]["port"])
-FIELD_GAME = os.getenv("FIELD_GAME", SETTINGS["fieldname"]["game"])
-FIELD_CURRENTMAP = os.getenv("FIELD_CURRENTMAP", SETTINGS["fieldname"]["currentmap"])
-FIELD_PLAYERS = os.getenv("FIELD_PLAYERS", SETTINGS["fieldname"]["players"])
-FIELD_COUNTRY = os.getenv("FIELD_COUNTRY", SETTINGS["fieldname"]["country"])
-
+VERSION = '2.0.0'
 class DiscordGSM():
-    def __init__(self, bot):
-        print('\n----------------')
-        print('Github: \thttps://github.com/DiscordGSM/DiscordGSM')
-        print('Discord:\thttps://discord.gg/Cg4Au9T')
-        print('----------------\n')
+    def __init__(self, client):
 
-        self.bot = bot
+        self.client = client
         self.servers = Servers()
         self.server_list = self.servers.get()
         self.messages = []
+        #number of failed attempt to post.
         self.message_error_count = self.current_display_server = 0
 
     def start(self):
@@ -82,28 +36,23 @@ class DiscordGSM():
         self.presense_load.cancel()
 
     async def on_ready(self):
-        # set username and avatar
-        icon_file_name = 'images/discordgsm' + ('DGSM_TOKEN' in os.environ and '-heroku' or '') + '.png'
-        with open(icon_file_name, 'rb') as file:
-            try:
-                await bot.user.edit(username='DiscordGSM', avatar=file.read())
-            except:
-                pass
-
         # print info to console
         print('\n----------------')
-        print(f'Logged in as:\t{bot.user.name}')
-        print(f'Robot ID:\t{bot.user.id}')
-        app_info = await bot.application_info()
+        print(f'Logged in as:\t{client.user.name}')
+        print(f'Client ID:\t{client.user.id}')
+        app_info = await client.application_info()
         print(f'Owner ID:\t{app_info.owner.id} ({app_info.owner.name})')
         print('----------------\n')
 
+        #Print presence type and rate to console
         self.print_presense_hint()
+        #Update bot presence
         self.presense_load.start()
 
-        await self.set_channels_permissions()
-        self.print_to_console(f'Query server and send discord embed every {REFRESH_RATE} seconds...')
+        self.print_to_console(f'Query server and send discord embed every {os.getenv("DGSM_REFRESH_RATE")} seconds...')
+        #async refresh embed messages
         await self.refresh_discord_embed()
+        #Start main update loop.
         self.print_servers.start()
 
     # query the servers
@@ -118,7 +67,7 @@ class DiscordGSM():
         self.print_to_console('Pre-Query servers...')
         server_count = self.servers.query()
         self.print_to_console(f'{server_count} servers queried')
-        await self.bot.wait_until_ready()
+        await self.client.wait_until_ready()
         await self.on_ready()
     
     # send messages to discord
@@ -172,19 +121,8 @@ class DiscordGSM():
             self.current_display_server += 1
 
         if activity_text != None:
-            await bot.change_presence(status=discord.Status.online, activity=discord.Activity(name=activity_text, type=3))
+            await client.change_presence(status=discord.Status.online, activity=discord.Activity(name=activity_text, type=3))
             self.print_to_console(f'Discord presence updated | {activity_text}')
-
-    # set channels permissions before sending new messages
-    async def set_channels_permissions(self):
-        channels = [server['channel'] for server in self.server_list]
-        channels = list(set(channels))  # remove duplicated channels
-        for channel in channels:
-            try:
-                await bot.get_channel(channel).set_permissions(bot.user, read_messages=True, send_messages=True, reason='Display servers embed')
-                self.print_to_console(f'Channel: {channel} | Permissions: read_messages, send_messages | Permissions set successfully')
-            except:
-                self.print_to_console(f'Channel: {channel} | Permissions: read_messages, send_messages | ERROR: Permissions fail to set')
 
     # remove old discord embed and send new discord embed
     async def refresh_discord_embed(self):
@@ -196,10 +134,10 @@ class DiscordGSM():
         channels = [server['channel'] for server in self.server_list]
         channels = list(set(channels)) # remove duplicated channels
         for channel in channels:
-            await bot.get_channel(channel).purge(check=lambda m: m.author==bot.user)
+            await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
         
         # send new discord embed
-        self.messages = [await bot.get_channel(s['channel']).send(content=('frontMessage' in s and s['frontMessage'].strip()) and s['frontMessage'] or None, embed=self.get_embed(s)) for s in self.server_list]
+        self.messages = [await client.get_channel(s['channel']).send(content=('frontMessage' in s and s['frontMessage'].strip()) and s['frontMessage'] or None, embed=self.get_embed(s)) for s in self.server_list]
     
     def print_to_console(self, value):
         print(datetime.now().strftime('%Y-%m-%d %H:%M:%S: ') + value)
@@ -218,7 +156,6 @@ class DiscordGSM():
     def get_embed(self, server):
         # load server cache
         server_cache = ServerCache(server['addr'], server['port'])
-
         # load server data
         data = server_cache.get_data()
 
@@ -232,7 +169,7 @@ class DiscordGSM():
                 if int(data['maxplayers']) <= int(data['players']):
                     color = discord.Color.from_rgb(240, 71, 71) # red
                 elif int(data['maxplayers']) <= int(data['players']) * 2:
-                    color = discord.Color.from_rgb(250, 166, 26) # yellew
+                    color = discord.Color.from_rgb(250, 166, 26) # yellow
                 else:
                     color = discord.Color.from_rgb(67, 181, 129) # green
                     try:
@@ -244,8 +181,9 @@ class DiscordGSM():
                         self.print_to_console(e)
             else:
                 color = discord.Color.from_rgb(32, 34, 37) # dark
-
-            title = (data['password'] and ':lock: ' or '') + f'`{data["name"]}`'
+            
+            title = ('title' in server) and server['title'] or (data['password'] and ':lock: ' or '') + f'`{data["name"]}`'
+            # if custom is in server and server['custom'] exist use server['custom'] or use None
             custom = ('custom' in server) and server['custom'] or None
             if custom and custom.strip():
                 embed = discord.Embed(title=title, description=custom, color=color)
@@ -254,7 +192,7 @@ class DiscordGSM():
             else:
                 embed = discord.Embed(title=title, color=color)
 
-            embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status}**', inline=True)
+            embed.add_field(name=SETTINGS["fieldname"]["status"], value=f'{emoji} **{status}**', inline=True)
             embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{data["addr"]}:{data["port"]}`', inline=True)
  
             flag_emoji = ('country' in server) and (':flag_' + server['country'].lower() + f': {server["country"]}') or ':united_nations: Unknown'
@@ -285,16 +223,16 @@ class DiscordGSM():
             embed = discord.Embed(title='ERROR', description=f'{FIELD_STATUS}: :warning: **Fail to query**', color=color)
             embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'{server["addr"]}:{server["port"]}', inline=True)
         
-        embed.set_footer(text=f'DiscordGSM v{VERSION} | 📺Game Server Monitor | Last update: ' + datetime.now().strftime('%a, %Y-%m-%d %I:%M:%S%p'), icon_url='https://github.com/DiscordGSM/DiscordGSM/raw/master/images/discordgsm.png')
+        embed.set_footer(text=f'{FIELD_LASTUPDATE}: ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         
         return embed
 
     def get_server_list(self):
         return self.server_list
 
-bot = discord.Client()
+client = discord.Client()
 
-discordgsm = DiscordGSM(bot)
+discordgsm = DiscordGSM(client)
 discordgsm.start()
 
-bot.run(DGSM_TOKEN)
+client.run(DGSM_TOKEN)
