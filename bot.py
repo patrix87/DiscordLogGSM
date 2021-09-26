@@ -271,12 +271,9 @@ class DiscordGSM():
             if "custom" in server and server["custom"]:
                 embed.add_field(name=FIELD_CUSTOM, value=server["custom"], inline=False)
 
-
+            #Thumbnail
             if "image_url" in server:
                 image_url = str(server["image_url"])
-            else:
-                image_url = (CUSTOM_IMAGE_URL and CUSTOM_IMAGE_URL.strip()) and CUSTOM_IMAGE_URL or f'https://github.com/DiscordGSM/Map-Thumbnails/raw/master/{urllib.parse.quote(data["game"])}'
-                image_url += f'/{urllib.parse.quote(data["map"])}.jpg'
 
             embed.set_thumbnail(url=image_url)
         else:
@@ -285,7 +282,7 @@ class DiscordGSM():
             embed = discord.Embed(title="ERROR", description=f'{FIELD_STATUS}: :warning: **Fail to query**', color=color)
             embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'{server["address"]}:{server["port"]}', inline=True)
         
-        embed.set_footer(text=f'{FIELD_LASTUPDATE}: ' + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        embed.set_footer(text=f'{FIELD_LASTUPDATE}: ' + datetime.now().strftime("%Y-%m-%d %H:%M:%S"), icon_url=CUSTOM_IMAGE_URL)
         
         return embed
 
