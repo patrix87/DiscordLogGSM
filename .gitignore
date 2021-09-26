@@ -1,7 +1,6 @@
 __pycache__/
 cache/*.txt
 cache/*.json
-.vscode
 node_modules
 venv/
 *.env
