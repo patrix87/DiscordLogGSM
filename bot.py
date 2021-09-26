@@ -52,7 +52,7 @@ class DiscordGSM():
     def cancel(self):
         self.query_servers.cancel()
         self.print_servers.cancel()
-        self.presense_load.cancel()
+        self.presence_load.cancel()
 
     async def on_ready(self):
         # print info to console
@@ -64,9 +64,9 @@ class DiscordGSM():
         print("----------------\n")
 
         #Print presence type and rate to console
-        self.print_presense_hint()
+        self.print_presence_hint()
         #Update bot presence
-        self.presense_load.start()
+        self.presence_load.start()
 
         self.print_to_console(f'Query server and send discord embed every {REFRESH_RATE} seconds...')
         #async refresh embed messages
@@ -108,14 +108,14 @@ class DiscordGSM():
             self.print_to_console(f'Message ERROR reached, refreshing...')
             await self.refresh_discord_embed()
     
-    # refresh discord presense
+    # refresh discord presence
     @tasks.loop(minutes=PRESENCE_RATE)
-    async def presense_load(self):
+    async def presence_load(self):
         # 1 = display number of servers, 2 = display total players/total maxplayers, 3 = display each server one by one every 10 minutes
         if len(self.server_list) == 0:
             activity_text = f'Command: {PREFIX}dgsm'
         if PRESENCE_TYPE <= 1:
-            activity_text = f'{len(self.server_list)} game servers'
+            activity_text = f'{len(self.servers.get_distinct_servers())} game servers'
         elif PRESENCE_TYPE == 2:
             total_activeplayers = total_maxplayers = 0
             for server in self.server_list:
@@ -162,7 +162,7 @@ class DiscordGSM():
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
 
     # 1 = display number of servers, 2 = display total players/total maxplayers, 3 = display each server one by one every 10 minutes
-    def print_presense_hint(self):
+    def print_presence_hint(self):
         if PRESENCE_TYPE <= 1:
             hints = "number of servers"
         elif PRESENCE_TYPE == 2:
