@@ -160,7 +160,7 @@ class DiscordGSM():
         
         # send new discord embed
         for s in self.server_list:
-            self.messages = await client.get_channel(s["channel"]).send(embeded=self.get_embed(s))
+            self.messages = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
             asyncio.sleep(5)
 
     def print_to_console(self, value):
