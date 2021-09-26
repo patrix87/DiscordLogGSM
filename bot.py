@@ -261,8 +261,11 @@ class DiscordGSM():
                 embed.add_field(name=FIELD_COUNTRY, value=flag_emoji, inline=True)
             
             #Map
-            if "map" in server and server["map"] and len(data["map"]) > 0:
-                embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
+            if "showmap" in server and server["showmap"]:
+                if "map" in server and server["map"]:
+                    embed.add_field(name=FIELD_CURRENTMAP, value=server["map"], inline=True)
+                elif len(data["map"]) > 0:
+                    embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
 
             #Custom Message
             if "custom" in server and server["custom"]:
