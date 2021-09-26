@@ -43,6 +43,10 @@ class Servers:
 
         return json.loads(data)
 
+    def get_distinct_servers(self):       
+        uniqueServers = [f'{server["addr"]}:{str(server["port"])}' for server in self.servers]
+        return list(set(uniqueServers))
+
     # add a server
     def add(self, type, game, addr, port, channel):
         data = {}
