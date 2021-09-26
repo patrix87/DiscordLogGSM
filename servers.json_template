@@ -2,7 +2,7 @@
     {
         "type": "[string][mandatory] GamedigQuery or SourceQuery or UT3Query.",
         "game": "[string][mandatory] See https://github.com/gamedig/node-gamedig",
-        "addr": "[string][mandatory] Relative server address.",
+        "address": "[string][mandatory] Relative server address.",
         "port": "[int][mandatory] Server Port.",
         "channel": "[int][mandatory] Discord channel id.",
         "image_url": "[string][optional] URL https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/93/Grass_Block_JE7_BE6.png",
