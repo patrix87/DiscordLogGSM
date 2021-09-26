@@ -10,12 +10,28 @@ from discord.ext import tasks
 # discordgsm
 from servers import Servers, ServerCache
 
-#load env
+# load env
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
 VERSION = '2.0.0'
+# Get Env
+PREFIX=os.getenv("DGSM_PREFIX")
+ROLEID=os.getenv("DGSM_ROLEID")
+CUSTOM_IMAGE_URL=os.getenv("DGSM_CUSTOM_IMAGE_URL")
+REFRESH_RATE=int(os.getenv("DGSM_REFRESH_RATE"))
+PRESENCE_TYPE=int(os.getenv("DGSM_PRESENCE_TYPE"))
+PRESENCE_RATE=int(os.getenv("DGSM_PRESENCE_RATE"))
+FIELD_STATUS=os.getenv("DGSM_FIELD_STATUS")
+FIELD_ADDRESS=os.getenv("DGSM_FIELD_ADDRESS")
+FIELD_PORT=os.getenv("DGSM_FIELD_PORT")
+FIELD_GAME=os.getenv("DGSM_FIELD_GAME")
+FIELD_CURRENTMAP=os.getenv("DGSM_FIELD_CURRENTMAP")
+FIELD_PLAYERS=os.getenv("DGSM_FIELD_PLAYERS")
+FIELD_COUNTRY=os.getenv("DGSM_FIELD_COUNTRY")
+FIELD_LASTUPDATE=os.getenv("DGSM_FIELD_LASTUPDATE")
+
 class DiscordGSM():
     def __init__(self, client):
 
@@ -49,7 +65,7 @@ class DiscordGSM():
         #Update bot presence
         self.presense_load.start()
 
-        self.print_to_console(f'Query server and send discord embed every {os.getenv("DGSM_REFRESH_RATE")} seconds...')
+        self.print_to_console(f'Query server and send discord embed every {REFRESH_RATE} seconds...')
         #async refresh embed messages
         await self.refresh_discord_embed()
         #Start main update loop.
@@ -94,7 +110,7 @@ class DiscordGSM():
     async def presense_load(self):
         # 1 = display number of servers, 2 = display total players/total maxplayers, 3 = display each server one by one every 10 minutes
         if len(self.server_list) == 0:
-            activity_text = f'Command: {DGSM_PREFIX}dgsm'
+            activity_text = f'Command: {PREFIX}dgsm'
         if PRESENCE_TYPE <= 1:
             activity_text = f'{len(self.server_list)} game servers'
         elif PRESENCE_TYPE == 2:
@@ -192,7 +208,7 @@ class DiscordGSM():
             else:
                 embed = discord.Embed(title=title, color=color)
 
-            embed.add_field(name=SETTINGS["fieldname"]["status"], value=f'{emoji} **{status}**', inline=True)
+            embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status}**', inline=True)
             embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{data["addr"]}:{data["port"]}`', inline=True)
  
             flag_emoji = ('country' in server) and (':flag_' + server['country'].lower() + f': {server["country"]}') or ':united_nations: Unknown'
@@ -235,4 +251,4 @@ client = discord.Client()
 discordgsm = DiscordGSM(client)
 discordgsm.start()
 
-client.run(DGSM_TOKEN)
+client.run(os.getenv("DGSM_TOKEN"))
