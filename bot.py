@@ -100,7 +100,7 @@ class DiscordGSM():
                     updated_count += 1
                 except:
                     self.message_error_count += 1
-                    self.print_to_console(f'ERROR: message {i} fail to edit, message deleted or no permission. Server: {self.server_list[i]["addr"]}:{self.server_list[i]["port"]}')
+                    self.print_to_console(f'ERROR: message {i} fail to edit, message deleted or no permission. Server: {self.server_list[i]["address"]}:{self.server_list[i]["port"]}')
 
             self.print_to_console(f'{updated_count} messages updated')
         else:
@@ -130,7 +130,7 @@ class DiscordGSM():
             if self.current_display_server >= len(self.server_list):
                 self.current_display_server = 0
 
-            server_cache = ServerCache(self.server_list[self.current_display_server]["addr"], self.server_list[self.current_display_server]["port"])
+            server_cache = ServerCache(self.server_list[self.current_display_server]["address"], self.server_list[self.current_display_server]["port"])
             data = server_cache.get_data()
             if data and server_cache.get_status() == "Online":
                 activity_text = f'{data["players"]}/{data["maxplayers"]} on {data["name"]}' if int(data["maxplayers"]) > 0 else "0 players"
@@ -246,7 +246,7 @@ class DiscordGSM():
             if "publicaddress" in server and server["publicaddress"]:
                 embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{server["publicaddress"]}`', inline=True)
             else:
-                embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{data["addr"]}:{data["port"]}`', inline=True)
+                embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{data["address"]}:{data["port"]}`', inline=True)
 
             #Password if defined
             if "password" in server and server["password"]:

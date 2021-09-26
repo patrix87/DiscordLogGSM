@@ -8,7 +8,7 @@ def fire_and_forget(f):
     def wrapped(*args, **kwargs): return asyncio.get_event_loop().run_in_executor(None, f, *args, *kwargs)
     return wrapped
 
-# load servers.json -> get all servers type, addr, port
+# load servers.json -> get all servers type, address, port
 class Servers:
     def __init__(self):
         self.refresh()
@@ -44,14 +44,14 @@ class Servers:
         return json.loads(data)
 
     def get_distinct_servers(self):       
-        uniqueServers = [f'{server["addr"]}:{str(server["port"])}' for server in self.servers]
+        uniqueServers = [f'{server["address"]}:{str(server["port"])}' for server in self.servers]
         return list(set(uniqueServers))
 
     # add a server
-    def add(self, type, game, addr, port, channel):
+    def add(self, type, game, address, port, channel):
         data = {}
         data["type"], data["game"] = type, game
-        data["addr"], data["port"] = addr, int(port)
+        data["address"], data["port"] = address, int(port)
         data["channel"] = int(channel)
 
         servers = self.get()
@@ -118,9 +118,9 @@ class Servers:
 
 # Game Server Data
 class ServerCache:
-    def __init__(self, addr, port):
-        self.addr, self.port = addr, port
-        self.file_name = addr.replace(":", ".") + "-" + str(port)
+    def __init__(self, address, port):
+        self.address, self.port = address, port
+        self.file_name = address.replace(":", ".") + "-" + str(port)
         self.file_name = "".join(i for i in self.file_name if i not in "\/:*?<>|")
 
     def get_status(self):
@@ -145,7 +145,7 @@ class ServerCache:
         data = {}
 
         # save game name, ip address, query port
-        data["game"], data["addr"], data["port"] = game, self.addr, gameport
+        data["game"], data["address"], data["port"] = game, self.address, gameport
 
         # save server name, map name, max players count
         data["name"], data["map"], data["maxplayers"] = name, map, maxplayers
