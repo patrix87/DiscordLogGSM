@@ -1,6 +1,7 @@
 import os
 import time
 import urllib
+import asyncio
 from datetime import datetime
 
 # discord
@@ -101,7 +102,9 @@ class DiscordGSM():
                 except:
                     self.message_error_count += 1
                     self.print_to_console(f'ERROR: message {i} fail to edit, message deleted or no permission. Server: {self.server_list[i]["address"]}:{self.server_list[i]["port"]}')
-
+                finally:
+                    asyncio.sleep(5)
+       
             self.print_to_console(f'{updated_count} messages updated')
         else:
             self.message_error_count = 0
@@ -156,8 +159,10 @@ class DiscordGSM():
             await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
         
         # send new discord embed
-        self.messages = [await client.get_channel(s["channel"]).send(embed=self.get_embed(s)) for s in self.server_list]
-    
+        for s in self.server_list:
+            self.messages = await client.get_channel(s["channel"]).send(embeded=self.get_embed(s))
+            asyncio.sleep(5)
+
     def print_to_console(self, value):
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
 
