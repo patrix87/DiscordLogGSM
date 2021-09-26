@@ -227,6 +227,9 @@ class DiscordGSM():
             #Server Name
             embed.add_field(name=FIELD_NAME, value=f'`{data["name"]}`', inline=True)
 
+            #Empty field
+            embed.add_field(name=u"\u200B", value=u"\u200B", inline=True)
+
             #Players
             if status == "Online":
                 value = str(data["players"]) # example: 20/32
@@ -238,9 +241,6 @@ class DiscordGSM():
                 embed.add_field(name=FIELD_PLAYERS, value=f'{value}/{server["maxplayers"]}', inline=True)
             else:
                 embed.add_field(name=FIELD_PLAYERS, value=f'{value}/{data["maxplayers"]}', inline=True)
-
-            #Empty field
-            embed.add_field(name=u"\u200B", value=u"\u200B", inline=True)
 
             #Server Address
             if "publicaddress" in server and server["publicaddress"]:
