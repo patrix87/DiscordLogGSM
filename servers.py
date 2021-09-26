@@ -31,14 +31,14 @@ class Servers:
                     pass
 
         if is_edited:
-            with open('configs/servers.json', 'w', encoding='utf-8') as file:
+            with open('servers.json', 'w', encoding='utf-8') as file:
                 json.dump(servers, file, ensure_ascii=False, indent=4)
 
         self.servers = servers 
 
     # get servers data
     def get(self):
-        with open('configs/servers.json', 'r', encoding='utf-8') as file:
+        with open('servers.json', 'r', encoding='utf-8') as file:
             data = file.read()
 
         return json.loads(data)
@@ -53,7 +53,7 @@ class Servers:
         servers = self.get()
         servers.append(data)
 
-        with open('configs/servers.json', 'w', encoding='utf-8') as file:
+        with open('servers.json', 'w', encoding='utf-8') as file:
             json.dump(servers, file, ensure_ascii=False, indent=4)
 
     # delete a server by id
@@ -62,7 +62,7 @@ class Servers:
         if 0 < int(id) <= len(servers):
             del servers[int(id) - 1]
 
-            with open('configs/servers.json', 'w', encoding='utf-8') as file:
+            with open('servers.json', 'w', encoding='utf-8') as file:
                 json.dump(servers, file, ensure_ascii=False, indent=4)
             
             return True
