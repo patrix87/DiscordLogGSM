@@ -119,7 +119,7 @@ class DiscordGSM():
         elif PRESENCE_TYPE == 2:
             total_activeplayers = total_maxplayers = 0
             for server in self.server_list:
-                server_cache = ServerCache(server["addr"], server["port"])
+                server_cache = ServerCache(server["address"], server["port"])
                 data = server_cache.get_data()
                 if data and server_cache.get_status() == "Online":
                     total_activeplayers += int(data["players"])
@@ -174,7 +174,7 @@ class DiscordGSM():
     # get game server discord embed
     def get_embed(self, server):
         # load server cache
-        server_cache = ServerCache(server["addr"], server["port"])
+        server_cache = ServerCache(server["address"], server["port"])
         # load server data
         data = server_cache.get_data()
 
@@ -261,8 +261,11 @@ class DiscordGSM():
                 embed.add_field(name=FIELD_COUNTRY, value=flag_emoji, inline=True)
             
             #Map
-            if "map" in server and server["map"] and len(data["map"]) > 0:
-                embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
+            if "showmap" in server and server["showmap"]:
+                if "map" in server and server["map"]:
+                    embed.add_field(name=FIELD_CURRENTMAP, value=server["map"], inline=True)
+                elif len(data["map"]) > 0:
+                    embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
 
             #Custom Message
             if "custom" in server and server["custom"]:
@@ -280,7 +283,7 @@ class DiscordGSM():
             # server fail to query
             color = discord.Color.from_rgb(240, 71, 71) # red
             embed = discord.Embed(title="ERROR", description=f'{FIELD_STATUS}: :warning: **Fail to query**', color=color)
-            embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'{server["addr"]}:{server["port"]}', inline=True)
+            embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'{server["address"]}:{server["port"]}', inline=True)
         
         embed.set_footer(text=f'{FIELD_LASTUPDATE}: ' + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         
