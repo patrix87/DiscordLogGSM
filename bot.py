@@ -221,9 +221,9 @@ class DiscordGSM():
             #Custom Message
             if "custom" in server and server["custom"]:
                 description = server["custom"]
-
-            #Create embed
-            embed = discord.Embed(title=title, description=description, color=color)
+                embed = discord.Embed(title=title, description=description, color=color)
+            else:
+                embed = discord.Embed(title=title, color=color)
 
             #Status
             embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status}**', inline=True)
