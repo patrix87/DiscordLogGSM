@@ -213,10 +213,10 @@ class DiscordGSM():
                 title += data["password"] and ":lock: " or ":unlock: "
 
             #Title Line
-            if ("title" in server) and server["title"]:
+            if "title" in server and server["title"]:
                 title += server["title"]
             else:
-                title += f'{data["name"]}'
+                title += f'{data["game"].capitalize()}'
 
             #Create embed
             embed = discord.Embed(title=title, color=color)
@@ -224,7 +224,8 @@ class DiscordGSM():
             #Status
             embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status}**', inline=True)
 
-            #Map
+            #Server Name
+            embed.add_field(name=FIELD_NAME, value=f'`{data["name"]}`', inline=True)
 
             #Players
             if status == "Online":
@@ -233,10 +234,13 @@ class DiscordGSM():
             else:
                 value = "0" # example: 0/32
 
-            embed.add_field(name=FIELD_PLAYERS, value=f'{value}/{data["maxplayers"]}', inline=True)
+            if "maxplayers" in server and server["maxplayers"]:
+                embed.add_field(name=FIELD_PLAYERS, value=f'{value}/{server["maxplayers"]}', inline=True)
+            else:
+                embed.add_field(name=FIELD_PLAYERS, value=f'{value}/{data["maxplayers"]}', inline=True)
 
-            #Server Name
-            embed.add_field(name=FIELD_NAME, value=f'`{data["name"]}`', inline=True)
+            #Empty field
+            embed.add_field(name=u"\u200B", value=u"\u200B", inline=True)
 
             #Server Address
             if "publicaddress" in server and server["publicaddress"]:
@@ -248,21 +252,22 @@ class DiscordGSM():
             if "password" in server and server["password"]:
                 embed.add_field(name=FIELD_PASSWORD, value=f'`{server["password"]}`', inline=True)
             else:
+                #Empty field
                 embed.add_field(name=u"\u200B", value=u"\u200B", inline=True)
-            
+
             #Country
             if "showcountry" in server and server["showcountry"]:
                 flag_emoji = ("country" in server) and (":flag_" + server['country'].lower() + f': {server["country"]}') or ":united_nations: Unknown"
                 embed.add_field(name=FIELD_COUNTRY, value=flag_emoji, inline=True)
+            
+            #Map
+            if "map" in server and server["map"] and len(data["map"]) > 0:
+                embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
 
             #Custom Message
             if "custom" in server and server["custom"]:
                 embed.add_field(name=FIELD_CUSTOM, value=server["custom"], inline=False)
 
-            if len(data["game"]) > 0:
-                embed.add_field(name=FIELD_GAME, value=data["game"], inline=True)
-            if len(data["map"]) > 0:
-                embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
 
             if "image_url" in server:
                 image_url = str(server["image_url"])
