@@ -24,6 +24,7 @@ CUSTOM_IMAGE_URL=os.getenv("DGSM_CUSTOM_IMAGE_URL")
 REFRESH_RATE=int(os.getenv("DGSM_REFRESH_RATE"))
 PRESENCE_TYPE=int(os.getenv("DGSM_PRESENCE_TYPE"))
 PRESENCE_RATE=int(os.getenv("DGSM_PRESENCE_RATE"))
+SEND_DELAY=int(os.getenv("DGSM_SEND_DELAY"))
 FIELD_NAME=os.getenv("DGSM_FIELD_NAME")
 FIELD_STATUS=os.getenv("DGSM_FIELD_STATUS")
 FIELD_ADDRESS=os.getenv("DGSM_FIELD_ADDRESS")
@@ -103,7 +104,7 @@ class DiscordGSM():
                     self.message_error_count += 1
                     self.print_to_console(f'ERROR: message {i} fail to edit, message deleted or no permission. Server: {self.server_list[i]["address"]}:{self.server_list[i]["port"]}')
                 finally:
-                    asyncio.sleep(5)
+                    asyncio.sleep(SEND_DELAY)
        
             self.print_to_console(f'{updated_count} messages updated')
         else:
@@ -161,7 +162,7 @@ class DiscordGSM():
         # send new discord embed
         for s in self.server_list:
             self.messages = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
-            asyncio.sleep(5)
+            asyncio.sleep(SEND_DELAY)
 
     def print_to_console(self, value):
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
