@@ -218,8 +218,12 @@ class DiscordGSM():
             else:
                 title += f'{data["game"].capitalize()}'
 
+            #Custom Message
+            if "custom" in server and server["custom"]:
+                description = server["custom"]
+
             #Create embed
-            embed = discord.Embed(title=title, color=color)
+            embed = discord.Embed(title=title, description=description, color=color)
 
             #Status
             embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status}**', inline=True)
@@ -266,10 +270,6 @@ class DiscordGSM():
                     embed.add_field(name=FIELD_CURRENTMAP, value=server["map"], inline=True)
                 elif len(data["map"]) > 0:
                     embed.add_field(name=FIELD_CURRENTMAP, value=data["map"], inline=True)
-
-            #Custom Message
-            if "custom" in server and server["custom"]:
-                embed.add_field(name=FIELD_CUSTOM, value=server["custom"], inline=False)
 
             #Thumbnail
             if "image_url" in server:
