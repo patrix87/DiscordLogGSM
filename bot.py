@@ -199,7 +199,7 @@ class DiscordGSM():
             # load server status Online/Offline
             status = server_cache.get_status()
 
-            emoji = (status == "Online") and ":green_circle:" or ":red_circle:"
+            emoji = ":green_circle:" if (status == "Online") else ":red_circle:"
 
             if status == "Online":
                 if int(data["maxplayers"]) <= int(data["players"]):
@@ -208,15 +208,16 @@ class DiscordGSM():
                     color = discord.Color.from_rgb(250, 166, 26) # yellow
                 else:
                     color = discord.Color.from_rgb(67, 181, 129) # green
-                    try:
-                        if "color" in server:
-                            h = server["color"].lstrip("#")
-                            rgb = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-                            color = discord.Color.from_rgb(rgb[0], rgb[1], rgb[2])
-                    except Exception as e:
-                        self.print_to_console(e)
             else:
-                color = discord.Color.from_rgb(32, 34, 37) # dark
+                color = discord.Color.from_rgb(0, 0, 0) # black
+
+            try:
+                if "color" in server:
+                    h = server["color"].lstrip("#")
+                    rgb = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+                    color = discord.Color.from_rgb(rgb[0], rgb[1], rgb[2])
+            except Exception as e:
+                self.print_to_console(e)
             
             #Title
             title = ""
@@ -257,7 +258,7 @@ class DiscordGSM():
 
             #Players
             if status == "Online":
-                if server["type"] == "fake":
+                if server["type"] == "Fake":
                     value = "?"
                 else:
                     value = str(data["players"]) # example: 20/32
@@ -300,11 +301,86 @@ class DiscordGSM():
                 image_url = str(server["image_url"])
 
             embed.set_thumbnail(url=image_url)
+
         else:
-            # server fail to query
-            color = discord.Color.from_rgb(240, 71, 71) # red
-            embed = discord.Embed(title="ERROR", description=f'{FIELD_STATUS}: :warning: **Fail to query**', color=color)
-            embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'{server["address"]}:{server["port"]}', inline=True)
+            #Unable to query server.
+            status = "Offline"
+
+            color = discord.Color.from_rgb(0, 0, 0) # black
+
+            try:
+                if "color" in server:
+                    h = server["color"].lstrip("#")
+                    rgb = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+                    color = discord.Color.from_rgb(rgb[0], rgb[1], rgb[2])
+            except Exception as e:
+                self.print_to_console(e)
+
+            emoji = ":red_circle:"
+
+            #Title
+            title = ""
+            #Lock Icon
+            if ("lock" in server):
+                if server["lock"]:
+                    title += ":lock: "
+
+            #Title Line
+            if "title" in server and server["title"]:
+                title += server["title"]
+            else:
+                title += f'{server["game"].capitalize()}'
+
+            #Custom Message
+            if "custom" in server and server["custom"]:
+                description = server["custom"]
+                embed = discord.Embed(title=title, description=description, color=color)
+            else:
+                embed = discord.Embed(title=title, color=color)
+
+            #Status
+            status_text = FIELD_OFFLINE
+            embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status_text}**', inline=True)
+
+            #Server Name
+            hostname = "hostname" in server and server["hostname"] or "title" in server and server["title"] or server["game"].capitalize()
+            embed.add_field(name=FIELD_NAME, value=f'`{hostname}`', inline=True)
+
+            #Empty field
+            embed.add_field(name=u"\u200B", value=u"\u200B", inline=True)
+
+            #Players
+            maxplayers = "maxplayers" in server and server["maxplayers"] or "??"
+            embed.add_field(name=FIELD_PLAYERS, value=f'0/{maxplayers}', inline=True)
+
+            #Server Address
+            if "publicaddress" in server and server["publicaddress"]:
+                embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{server["publicaddress"]}`', inline=True)
+            else:
+                embed.add_field(name=f'{FIELD_ADDRESS}:{FIELD_PORT}', value=f'`{server["address"]}:{server["port"]}`', inline=True)
+
+            #Password if defined
+            if "password" in server and server["password"]:
+                embed.add_field(name=FIELD_PASSWORD, value=f'`{server["password"]}`', inline=True)
+            else:
+                #Empty field
+                embed.add_field(name=u"\u200B", value=u"\u200B", inline=True)
+
+            #Country
+            if "showcountry" in server and server["showcountry"]:
+                flag_emoji = ("country" in server) and (":flag_" + server['country'].lower() + f': {server["country"]}') or ":united_nations: Unknown"
+                embed.add_field(name=FIELD_COUNTRY, value=flag_emoji, inline=True)
+            
+            #Map
+            if "showmap" in server and server["showmap"]:
+                if "map" in server and server["map"]:
+                    embed.add_field(name=FIELD_CURRENTMAP, value=server["map"], inline=True)
+
+            #Thumbnail
+            if "image_url" in server:
+                image_url = str(server["image_url"])
+
+            embed.set_thumbnail(url=image_url)
         
         embed.set_footer(text=f'{FIELD_LASTUPDATE}: ' + datetime.now().strftime("%Y-%m-%d %H:%M:%S"), icon_url=CUSTOM_IMAGE_URL)
         
