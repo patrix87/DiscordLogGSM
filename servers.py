@@ -47,31 +47,6 @@ class Servers:
         uniqueServers = [f'{server["address"]}:{str(server["port"])}' for server in self.servers]
         return list(set(uniqueServers))
 
-    # add a server
-    def add(self, type, game, address, port, channel):
-        data = {}
-        data["type"], data["game"] = type, game
-        data["address"], data["port"] = address, int(port)
-        data["channel"] = int(channel)
-
-        servers = self.get()
-        servers.append(data)
-
-        with open("servers.json", "w", encoding="utf-8") as file:
-            json.dump(servers, file, ensure_ascii=False, indent=4)
-
-    # delete a server by id
-    def delete(self, id):
-        servers = self.get()
-        if 0 < int(id) <= len(servers):
-            del servers[int(id) - 1]
-
-            with open("servers.json", "w", encoding="utf-8") as file:
-                json.dump(servers, file, ensure_ascii=False, indent=4)
-            
-            return True
-        return False
-
     def query(self):
         for server in self.servers:
             try:
@@ -116,9 +91,12 @@ class Servers:
         
         #Fake Query for unsupported servers
         elif server["type"] == "Fake":
-            query = GamedigQuery(str(server["game"]), str(server["address"]), int(server["port"]))
             server_cache = ServerCache(server["address"], server["port"])
-            server_cache.save_data(server["game"], server["port"], server["hostname"] or server["game"], server["map"] or "", server["maxplayers"] or 0, 0, 0, server["password"] or "")
+            hostname = server["hostname"] or server["title"] or ""
+            map = server["map"] or ""
+            maxplayers = server["maxplayers"] or 0
+            password = server["password"] or ""
+            server_cache.save_data(server["game"], server["port"], hostname, map, maxplayers, 0, 0, password)
 
 # Game Server Data
 class ServerCache:
