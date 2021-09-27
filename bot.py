@@ -2,6 +2,7 @@ import os
 import time
 import urllib
 import asyncio
+import sys
 from datetime import datetime
 
 # discord
@@ -144,8 +145,11 @@ class DiscordGSM():
             self.current_display_server += 1
 
         if activity_text != None:
-            await client.change_presence(status=discord.Status.online, activity=discord.Activity(name=activity_text, type=3))
-            self.print_to_console(f'Discord presence updated | {activity_text}')
+            try:
+                await client.change_presence(status=discord.Status.online, activity=discord.Activity(name=activity_text, type=3))
+                self.print_to_console(f'Discord presence updated | {activity_text}')
+            except:
+                self.print_to_console(f'ERROR: Unable to update presence.')
 
     # remove old discord embed and send new discord embed
     async def refresh_discord_embed(self):
@@ -157,12 +161,24 @@ class DiscordGSM():
         channels = [server["channel"] for server in self.server_list]
         channels = list(set(channels)) # remove duplicated channels
         for channel in channels:
-            await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
-        
+            try:
+                await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
+            except:
+                self.print_to_console(f'ERROR: Unable to delete messages.')
+            finally:
+                await asyncio.sleep(SEND_DELAY)
+
         # send new discord embed
         for s in self.server_list:
-            self.messages = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
-            await asyncio.sleep(SEND_DELAY)
+
+            try:
+                message = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
+                self.messages.append(message)
+            except:
+                self.message_error_count += 1
+                self.print_to_console(f'ERROR: message fail to send, no permission. Server: {s["address"]}:{s["port"]}')
+            finally:
+                await asyncio.sleep(SEND_DELAY)
 
     def print_to_console(self, value):
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
@@ -242,8 +258,11 @@ class DiscordGSM():
 
             #Players
             if status == "Online":
-                value = str(data["players"]) # example: 20/32
-                if int(data["bots"]) > 0: value += f' ({data["bots"]})' # example: 20 (2)/32
+                if server["type"] == "fake":
+                    value = "?"
+                else:
+                    value = str(data["players"]) # example: 20/32
+                    if int(data["bots"]) > 0: value += f' ({data["bots"]})' # example: 20 (2)/32
             else:
                 value = "0" # example: 0/32
 

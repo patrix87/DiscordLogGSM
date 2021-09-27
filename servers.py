@@ -113,8 +113,12 @@ class Servers:
                 server_cache.save_data(server["game"], server["port"], result["Hostname"], result["Map"], result["MaxPlayers"], result["Players"], result["Bots"], result["Password"])
             else:
                 server_cache.set_status("Offline")
-
-
+        
+        #Fake Query for unsupported servers
+        elif server["type"] == "Fake":
+            query = GamedigQuery(str(server["game"]), str(server["address"]), int(server["port"]))
+            server_cache = ServerCache(server["address"], server["port"])
+            server_cache.save_data(server["game"], server["port"], server["hostname"] or server["game"], server["map"] or "", server["maxplayers"] or 0, 0, 0, server["password"] or "")
 
 # Game Server Data
 class ServerCache:
