@@ -156,6 +156,7 @@ class DiscordGSM():
         # refresh servers.json cache
         self.servers = Servers()
         self.server_list = self.servers.get()
+        self.messages = []
 
         # remove old discord embed
         channels = [server["channel"] for server in self.server_list]
