@@ -39,6 +39,7 @@ FIELD_CUSTOM=os.getenv("DGSM_FIELD_CUSTOM")
 FIELD_PASSWORD=os.getenv("DGSM_FIELD_PASSWORD")
 FIELD_ONLINE=os.getenv("DGSM_FIELD_ONLINE")
 FIELD_OFFLINE=os.getenv("DGSM_FIELD_OFFLINE")
+FIELD_UNKNOWN=os.getenv("DGSM_FIELD_UNKNOWN")
 
 class DiscordGSM():
     def __init__(self, client):
@@ -316,7 +317,7 @@ class DiscordGSM():
             except Exception as e:
                 self.print_to_console(e)
 
-            emoji = ":red_circle:"
+            emoji = ":yellow_circle:"
 
             #Title
             title = ""
@@ -339,7 +340,7 @@ class DiscordGSM():
                 embed = discord.Embed(title=title, color=color)
 
             #Status
-            status_text = FIELD_OFFLINE
+            status_text = FIELD_UNKNOWN
             embed.add_field(name=FIELD_STATUS, value=f'{emoji} **{status_text}**', inline=True)
 
             #Server Name
@@ -351,7 +352,7 @@ class DiscordGSM():
 
             #Players
             maxplayers = "maxplayers" in server and server["maxplayers"] or "??"
-            embed.add_field(name=FIELD_PLAYERS, value=f'0/{maxplayers}', inline=True)
+            embed.add_field(name=FIELD_PLAYERS, value=f'?/{maxplayers}', inline=True)
 
             #Server Address
             if "publicaddress" in server and server["publicaddress"]:
