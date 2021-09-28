@@ -327,6 +327,15 @@ class DiscordGSM():
             if ("lock" in server):
                 if server["lock"]:
                     title += ":lock: "
+                else:
+                    title += ":unlock: "
+
+            #Title Line
+            if "title" in server and server["title"]:
+                title += server["title"]
+            else:
+                title += f'{data["game"].capitalize()}'
+
 
             #Title Line
             if "title" in server and server["title"]:
