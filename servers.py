@@ -29,7 +29,8 @@ class Servers:
                             is_edited = True
                 except:
                     pass
-
+        
+        #overwrite servers.json if a country is missing
         if is_edited:
             with open("servers.json", "w", encoding="utf-8") as file:
                 json.dump(servers, file, ensure_ascii=False, indent=4)

@@ -85,6 +85,8 @@ class DiscordGSM():
     # query the servers
     @tasks.loop(minutes=REFRESH_RATE)
     async def query_servers(self):
+        self.servers.refresh()
+        self.server_list = self.servers.get()
         server_count = self.servers.query()
         self.print_to_console(f'{server_count} servers queried')
 
