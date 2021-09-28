@@ -96,7 +96,7 @@ class DiscordGSM():
         self.print_to_console("Pre-Query servers...")
         server_count = self.servers.query()
         self.print_to_console(f'{server_count} servers queried')
-        await self.client.wait_until_ready()
+        await client.wait_until_ready()
         await self.on_ready()
     
     # send messages to discord
