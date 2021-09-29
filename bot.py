@@ -17,7 +17,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-VERSION = "2.0.0"
+VERSION = "LOG v.1.0.0"
 # Get Env
 PREFIX=os.getenv("DGSM_PREFIX")
 ROLEID=os.getenv("DGSM_ROLEID")
@@ -239,7 +239,7 @@ class DiscordGSM():
             embed.add_field(name=SPACER, value=SPACER, inline=True)
         else:
             embed.add_field(name=FIELD_PASSWORD, value=f'`{password}`', inline=True)
-            
+
         if country:
             embed.add_field(name=FIELD_COUNTRY, value=f':flag_{country.lower()}:', inline=True)
         if map and not country:
