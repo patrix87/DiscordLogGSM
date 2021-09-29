@@ -17,7 +17,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-VERSION = "2.0.0"
+VERSION = "LOG v.1.0.0"
 # Get Env
 PREFIX=os.getenv("DGSM_PREFIX")
 ROLEID=os.getenv("DGSM_ROLEID")
