@@ -248,7 +248,10 @@ class DiscordGSM():
 
         country = self.get_value(server, "country")
 
-        map = self.get_value(server, "map") or self.get_value(data, "map")
+        if self.get_value(server, "map") == False:
+            map = None
+        else:
+            map = self.get_value(server, "map") or self.get_value(data, "map")
 
         image_url = self.get_value(server, "image_url")
 
