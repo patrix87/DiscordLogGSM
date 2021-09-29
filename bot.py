@@ -40,6 +40,7 @@ FIELD_PASSWORD=os.getenv("DGSM_FIELD_PASSWORD")
 FIELD_ONLINE=os.getenv("DGSM_FIELD_ONLINE")
 FIELD_OFFLINE=os.getenv("DGSM_FIELD_OFFLINE")
 FIELD_UNKNOWN=os.getenv("DGSM_FIELD_UNKNOWN")
+SPACER=u"\u200B"
 
 class DiscordGSM():
     def __init__(self, client):
@@ -198,6 +199,96 @@ class DiscordGSM():
         # load server data
         data = server_cache.get_data()
 
+        #
+        #   [LOCK] Title or Game                                       [ Thumbnail ]
+        #                                                              [   Image   ]    
+        #   Description (FIELD_CUSTOM)  
+        #   
+        #   FIELD_STATUS            FIELD_NAME                  EMPTY_FIELD
+        #   [icon] Status           Hostname or Title or Game   Empty Char.
+        #
+        #   FIELD_PLAYERS           FIELD_ADDRESS               FIELD_PASSWORD
+        #   Number of players       server adresse:port         The password or Empty Field.
+        #
+        #   FIELD_COUNTRY           FIELD_CURRENTMAP
+        #   [Country Flag] or Empty   Current Map
+        #
+        #   [Footer thumbnail] | Bot name + Version | Long name | Last update Time *(used as spacer to strech embed)
+        #
+
+        # Fetch and format correct Data
+        
+        #   listed by primary data source, goes to the second one if null.
+        #
+        #   Lock State : server["locked"](true false) or data["password"](true false) or none
+        #   
+        #   Title : server["title"] or data["game"] or server["game"]
+        #   Description : server["custom"] + "\n[icon] failed to query" or none
+        #   Status : [icon] + server_cache.get_status() or FIELD_UNKNOWN
+        #   Hostname : server["hostname"] or data["name"] or empty char
+        #   Players : data["players"] (data["bots"]) or "?"
+        #   MaxPlayers : server["maxplayer"] or data["maxplayers"]
+        #   Address : server["publicaddress"] or server["address"]:server["port"] or data["address"]:data["port"] or empty char
+        #   Password : server["password"] or No field.
+        #   Country : server["country"](if = false or "" don't show box) or empty char
+        #   Map : server["map"](if = false or "" don't show box) or data["map"] or no field.
+        #
+
+
+        # Lock State : server["locked"](true false) or data["password"](true false) or none
+        if "locked" in server and type(server["locked"]) == bool:
+            lock = server["locked"]
+        elif "password" in data and type(data["locked"]) == bool:
+            lock = data["locked"]
+        else:
+            lock = False
+
+        # Title : server["title"] or data["game"] or server["game"]
+        title = "title" in server and server["title"] or "game" in data and data["game"].capitalize() or "game" in server and server["game"].capitalize()
+       
+        # Description : server["custom"] + "\n[icon] failed to query" or none
+        description = "custom" in server and server["custom"] or None
+        
+        # Status : [icon] + server_cache.get_status() or FIELD_UNKNOWN
+        if server_cache.get_status() == "Online":
+            status = f':green_circle: **{FIELD_ONLINE}**'
+        elif server_cache.get_status() == "Offline":
+            status = f':red_circle: **{FIELD_OFFLINE}**'
+        else:
+            status = f':red_circle: **{FIELD_UNKNOWN}**'
+
+        # Hostname : server["hostname"] or data["name"] or empty char
+        hostname = "hostname" in server and server["hostname"] or "name" in data and data["name"] or SPACER
+
+        # Players : data["players"] (data["bots"]) or "?"
+        players = int(data["players"]) if type(data) == dict and "players" in data and data["players"] != None else "?"
+        bots = int(data["bots"]) if type(data) == dict and "bots" in data and data["bots"] != None else "?"
+        players_string = f'{players}({bots})' if bots > 0 else f'{players}'
+
+        # MaxPlayers :  data["maxplayers"] or server["maxplayer"] 
+        if "maxplayers" in data and data["maxplayers"] != None:
+            maxplayers = int(data["maxplayers"])
+        elif "maxplayers" in server and server["maxplayers"] != None:
+            maxplayers = int(server["maxplayers"])
+        else:
+            maxplayers = "??"
+        
+        # Address : server["publicaddress"] or server["address"]:server["port"] or data["address"]:data["port"] or empty char
+        address = "public_address" in server and server["public_address"] or "name" in data and data["name"] or SPACER
+
+        # Password : server["password"] or No field.
+        password = "password" in server and server["password"] or None
+
+        # Country : server["country"](if = false or "" don't show box) or None
+        country = "country" in server and server["country"] or None
+
+        # Map : server["map"](if = false or "" don't show box) or data["map"] or no field.
+        map = "map" in server and server["map"] or "map" in data and data["map"] or None
+
+        # Build embed
+
+        
+
         if data:
             # load server status Online/Offline
             status = server_cache.get_status()
@@ -242,9 +333,9 @@ class DiscordGSM():
             #Custom Message
             if "custom" in server and server["custom"]:
                 description = server["custom"]
-                embed = discord.Embed(title=title, description=description, color=color)
+                embed = discord.Embed(title=f':lock: `{title}`', description=description, color=color)
             else:
-                embed = discord.Embed(title=title, color=color)
+                embed = discord.Embed(title=f':lock: `{title}`', color=color)
 
             #Status
             if status == "Online":
@@ -327,12 +418,14 @@ class DiscordGSM():
             if ("lock" in server):
                 if server["lock"]:
                     title += ":lock: "
+                else:
+                    title += ":unlock: "
 
             #Title Line
             if "title" in server and server["title"]:
                 title += server["title"]
             else:
-                title += f'{server["game"].capitalize()}'
+                title += f'{data["game"].capitalize()}'
 
             #Custom Message
             if "custom" in server and server["custom"]:
@@ -384,8 +477,7 @@ class DiscordGSM():
                 image_url = str(server["image_url"])
 
             embed.set_thumbnail(url=image_url)
-        
-        embed.set_footer(text=f'{FIELD_LASTUPDATE}: ' + datetime.now().strftime("%Y-%m-%d %H:%M:%S"), icon_url=CUSTOM_IMAGE_URL)
+        embed.set_footer(text=f'{FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}{SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
         return embed
 
