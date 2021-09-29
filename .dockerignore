@@ -1,4 +1,6 @@
-**/__pycache__
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
 **/.classpath
 **/.dockerignore
 **/.git
@@ -8,13 +10,13 @@
 **/.toolstarget
 **/.vs
 **/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/charts
-**/docker-compose*
-**/compose*
 **/Dockerfile*
+**/__pycache__
+**/cache/*
+**/charts
+**/compose*
+**/docker-compose*
+**/images
 **/node_modules
 **/npm-debug.log
 **/obj
