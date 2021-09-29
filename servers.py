@@ -92,7 +92,7 @@ class Servers:
 
         elif str(server["type"]).lower() == "fake":
             server_cache = ServerCache(server["address"], server["port"])
-            server_cache.save_data(server["game"], server["port"])
+            server_cache.save_data(server["game"], server["port"], None, None, None, None, None, None)
 
 # Game Server Data
 class ServerCache:
