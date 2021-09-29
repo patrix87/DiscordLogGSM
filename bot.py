@@ -231,11 +231,8 @@ class DiscordGSM():
         hostname = self.get_value(server, "hostname") or self.get_value(data, "name") or SPACER
 
         players = self.get_value(data, "players", "?")
-
         bots = self.get_value(data, "bots")
-
         maxplayers = self.get_value(data, "maxplayers") or self.get_value(server, "maxplayers") or "?"
-
         players_string = f'{players}({bots})/{maxplayers}' if bots is not None and bots > 0 else f'{players}/{maxplayers}'
         
         port = self.get_value(data, "port")
