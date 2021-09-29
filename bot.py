@@ -228,7 +228,7 @@ class DiscordGSM():
         else:
             status = f':yellow_circle: **{FIELD_UNKNOWN}**'
 
-        hostname = self.get_value(server, "hostname") or self.get_value(data, "name") or SPACER
+        hostname = self.get_value(data, "name") or self.get_value(server, "hostname") or SPACER
 
         players = self.get_value(data, "players", "?")
         bots = self.get_value(data, "bots")
