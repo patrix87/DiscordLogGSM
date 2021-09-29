@@ -219,7 +219,7 @@ class DiscordGSM():
         else:
             title = f':unlock: {title}'
         
-        description = self.get_value(server, "custom") or SPACER
+        description = self.get_value(server, "custom")
         
         if cache_status == "Online":
             status = f':green_circle: **{FIELD_ONLINE}**'
@@ -275,8 +275,10 @@ class DiscordGSM():
             pass
 
         # Build embed
-
-        embed = discord.Embed(title=title, description=description, color=color)
+        if description:
+            embed = discord.Embed(title=title, description=description, color=color)
+        else:
+            embed = discord.Embed(title=title, color=color)
         embed.add_field(name=FIELD_STATUS, value=status, inline=True)
         embed.add_field(name=FIELD_NAME, value=hostname, inline=True)
         embed.add_field(name=SPACER, value=SPACER, inline=True)
