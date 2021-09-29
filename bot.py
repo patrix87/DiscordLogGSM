@@ -52,7 +52,7 @@ class DiscordGSM():
         self.message_error_count = self.current_display_server = 0
 
     def start(self):
-        self.print_to_console(f'Starting DiscordGSM v{VERSION}...')
+        self.print_to_console(f'Starting DiscordGSM {VERSION}...')
         #Query Servers
         self.query_servers.start()
 
@@ -299,7 +299,7 @@ class DiscordGSM():
         if image_url:
             embed.set_thumbnail(url=image_url)
 
-        embed.set_footer(text=f'DiscordGSM v{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}      {SPACER}', icon_url=CUSTOM_IMAGE_URL)
+        embed.set_footer(text=f'DiscordGSM {VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}      {SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
         return embed
         
