@@ -215,9 +215,9 @@ class DiscordGSM():
 
         title = self.get_value(server, "title") or self.get_value(data, "game") or self.get_value(server, "game")
         if lock:
-            title = f':lock: {title.capitalize()}'
+            title = f':lock: {title}'
         else:
-            title = f':unlock: {title.capitalize()}'
+            title = f':unlock: {title}'
         
         description = self.get_value(server, "custom") or SPACER
         
@@ -228,7 +228,7 @@ class DiscordGSM():
         else:
             status = f':yellow_circle: **{FIELD_UNKNOWN}**'
 
-        hostname = self.get_value(data, "name") or self.get_value(server, "hostname") or SPACER
+        hostname = self.get_value(server, "hostname") or self.get_value(data, "name") or SPACER
 
         players = self.get_value(data, "players", "?")
         bots = self.get_value(data, "bots")
