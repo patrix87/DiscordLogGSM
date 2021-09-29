@@ -89,15 +89,6 @@ class Servers:
                 server_cache.save_data(server["game"], server["port"], result["Hostname"], result["Map"], result["MaxPlayers"], result["Players"], result["Bots"], result["Password"])
             else:
                 server_cache.set_status("Offline")
-        
-        #Fake Query for unsupported servers
-        elif server["type"] == "Fake":
-            server_cache = ServerCache(server["address"], server["port"])
-            hostname = server["hostname"] or server["title"] or ""
-            map = server["map"] or ""
-            maxplayers = server["maxplayers"] or 0
-            password = server["password"] or ""
-            server_cache.save_data(server["game"], server["port"], hostname, map, maxplayers, 0, 0, password)
 
 # Game Server Data
 class ServerCache:
