@@ -109,9 +109,9 @@ class DiscordGSM():
                 try:
                     await self.messages[i].edit(embed=self.get_embed(self.server_list[i]))
                     updated_count += 1
-                except:
+                except Exception as e:
                     self.message_error_count += 1
-                    self.print_to_console(f'ERROR: message {i} failed to edit, message deleted or no permission. Server: {self.server_list[i]["address"]}:{self.server_list[i]["port"]}')
+                    self.print_to_console(f'ERROR: message {i} failed to edit, message deleted or no permission. Server: {self.server_list[i]["address"]}:{self.server_list[i]["port"]}\n{e}')
                 finally:
                     await asyncio.sleep(SEND_DELAY)
        
@@ -134,8 +134,8 @@ class DiscordGSM():
         for channel in channels:
             try:
                 await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
-            except:
-                self.print_to_console(f'ERROR: Unable to delete messages.')
+            except Exception as e:
+                self.print_to_console(f'ERROR: Unable to delete messages.\n{e}')
             finally:
                 await asyncio.sleep(SEND_DELAY)
 
@@ -145,9 +145,9 @@ class DiscordGSM():
                 message = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
                 self.messages.append(message)
                 repost_count += 1
-            except:
+            except Exception as e:
                 self.message_error_count += 1
-                self.print_to_console(f'ERROR: message fail to send, no permission. Server: {s["address"]}:{s["port"]}')
+                self.print_to_console(f'ERROR: message fail to send, no permission. Server: {s["address"]}:{s["port"]}\n{e}')
             finally:
                 await asyncio.sleep(SEND_DELAY)
 
@@ -188,11 +188,11 @@ class DiscordGSM():
             try:
                 await client.change_presence(status=discord.Status.online, activity=discord.Activity(name=activity_text, type=3))
                 self.print_to_console(f'Discord presence updated | {activity_text}')
-            except:
-                self.print_to_console(f'ERROR: Unable to update presence.')
+            except Exception as e:
+                self.print_to_console(f'ERROR: Unable to update presence.\n{e}')
 
-    def get_value(dataset, field, default = None):
-        if type(dataset) != dict and field not in dataset and dataset[field] is None and dataset[field] == "": 
+    def get_value(self, dataset, field, default = None):
+        if type(dataset) != dict or field not in dataset or dataset[field] is None or dataset[field] == "": 
             return default
         return dataset[field]
 
@@ -202,29 +202,14 @@ class DiscordGSM():
         server_cache = ServerCache(server["address"], server["port"])
         # load server data
         data = server_cache.get_data()
-
-        #
-        #   [LOCK] Title or Game                                       [ Thumbnail ]
-        #                                                              [   Image   ]    
-        #   Description (FIELD_CUSTOM)  
-        #   
-        #   FIELD_STATUS            FIELD_NAME                  EMPTY_FIELD
-        #   [icon] Status           Hostname or Title or Game   Empty Char.
-        #
-        #   FIELD_PLAYERS           FIELD_ADDRESS               FIELD_PASSWORD
-        #   Number of players       server adresse:port         The password or Empty Field.
-        #
-        #   FIELD_COUNTRY           FIELD_CURRENTMAP
-        #   [Country Flag] or Empty   Current Map
-        #
-        #   [Footer thumbnail] | Bot name + Version | Long name | Last update Time *(used as spacer to strech embed)
-        #
+        # get status from cache
+        cache_status = server_cache.get_status()
 
         # Parsing Data
-        if "locked" in server and type(server["locked"]) == bool:
+        if type(self.get_value(server, "locked")) == bool:
             lock = server["locked"]
-        elif "password" in data and type(data["locked"]) == bool:
-            lock = data["locked"]
+        elif type(self.get_value(data, "password")) == bool:
+            lock = data["password"]
         else:
             lock = False
 
@@ -236,9 +221,9 @@ class DiscordGSM():
         
         description = self.get_value(server, "custom") or SPACER
         
-        if server_cache.get_status() == "Online":
+        if cache_status == "Online":
             status = f':green_circle: **{FIELD_ONLINE}**'
-        elif server_cache.get_status() == "Offline":
+        elif cache_status == "Offline" and data is not False:
             status = f':red_circle: **{FIELD_OFFLINE}**'
         else:
             status = f':yellow_circle: **{FIELD_UNKNOWN}**'
@@ -249,9 +234,9 @@ class DiscordGSM():
 
         bots = self.get_value(data, "bots")
 
-        players_string = f'{players}({bots})' if bots is not None and bots > 0 else f'{players}'
-
         maxplayers = self.get_value(data, "maxplayers") or self.get_value(server, "maxplayers") or "?"
+
+        players_string = f'{players}({bots})/{maxplayers}' if bots is not None and bots > 0 else f'{players}/{maxplayers}'
         
         port = self.get_value(data, "port")
         address = self.get_value(server, "public_address") or self.get_value(data, "address") and port and f'{data["address"]}:{port}' or SPACER
@@ -265,7 +250,7 @@ class DiscordGSM():
         image_url = self.get_value(server, "image_url")
 
         # Color : if offline = Black, if full = red, if half = yellow, if less = green, if defined = defined.
-        if server_cache.get_status() == "Online" and players != "?" and maxplayers != "??":
+        if cache_status == "Online" and players != "?" and maxplayers != "??":
             if players >= maxplayers:
                 color = discord.Color.from_rgb(240, 71, 71) # red
             elif players >= maxplayers / 2:
@@ -290,25 +275,26 @@ class DiscordGSM():
         embed.add_field(name=FIELD_NAME, value=hostname, inline=True)
         embed.add_field(name=SPACER, value=SPACER, inline=True)
         embed.add_field(name=FIELD_PLAYERS, value=players_string, inline=True)
-        embed.add_field(name=FIELD_ADDRESS, value=address, inline=True)
+        embed.add_field(name=FIELD_ADDRESS, value=f'`{address}`', inline=True)
         if password is None:
             embed.add_field(name=SPACER, value=SPACER, inline=True)
         else:
-            embed.add_field(name=FIELD_PASSWORD, value=password, inline=True)
-        if not country:
+            embed.add_field(name=FIELD_PASSWORD, value=f'`{password}`', inline=True)
+        if country:
+            embed.add_field(name=FIELD_COUNTRY, value=f':flag_{country.lower()}:', inline=True)
+        if map and not country:
             embed.add_field(name=SPACER, value=SPACER, inline=True)
-        else:
-            embed.add_field(name=FIELD_PASSWORD, value=f':flag_{country.lower()}:', inline=True)
         if map:
             embed.add_field(name=FIELD_CURRENTMAP, value=map, inline=True)
-
+        if map or country:
+            embed.add_field(name=SPACER, value=SPACER, inline=True)
         if image_url:
             embed.set_thumbnail(url=image_url)
 
-        embed.set_footer(text=f'DiscordGSM v{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}                   {SPACER}', icon_url=CUSTOM_IMAGE_URL)
+        embed.set_footer(text=f'DiscordGSM v{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}      {SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
         return embed
-
+        
 client = discord.Client()
 
 discordgsm = DiscordGSM(client)
