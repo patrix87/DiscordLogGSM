@@ -17,7 +17,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-VERSION = "LOG v.1.0.0"
+VERSION = "1.0.L"
 # Get Env
 PREFIX=os.getenv("DGSM_PREFIX")
 ROLEID=os.getenv("DGSM_ROLEID")
@@ -52,7 +52,7 @@ class DiscordGSM():
         self.message_error_count = self.current_display_server = 0
 
     def start(self):
-        self.print_to_console(f'Starting DiscordGSM {VERSION}...')
+        self.print_to_console(f'Starting DiscordGSM v.{VERSION}...')
         #Query Servers
         self.query_servers.start()
 
@@ -251,7 +251,7 @@ class DiscordGSM():
         if image_url:
             embed.set_thumbnail(url=image_url)
 
-        embed.set_footer(text=f'DiscordGSM {VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}       {SPACER}', icon_url=CUSTOM_IMAGE_URL)
+        embed.set_footer(text=f'DiscordGSM v.{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}{SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
         return embed
         
