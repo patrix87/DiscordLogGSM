@@ -251,7 +251,7 @@ class DiscordGSM():
         if image_url:
             embed.set_thumbnail(url=image_url)
 
-        embed.set_footer(text=f'DiscordGSM {VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}      {SPACER}', icon_url=CUSTOM_IMAGE_URL)
+        embed.set_footer(text=f'DiscordGSM {VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}       {SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
         return embed
         
