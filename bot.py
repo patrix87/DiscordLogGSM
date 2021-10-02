@@ -69,8 +69,8 @@ class DiscordGSM():
         app_info = await client.application_info()
         print(f'Owner ID:\t{app_info.owner.id} ({app_info.owner.name})')
         print("----------------\n")
-        
-        self.print_to_console(f'Querying servers and updating messages every {REFRESH_RATE} minutes...')  
+
+        self.print_to_console(f'Querying {len(self.server_list)} servers and updating messages every {REFRESH_RATE} minutes...')  
         
         self.presence_load.start()
         self.update_messages.start()
