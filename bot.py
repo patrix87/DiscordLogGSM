@@ -95,7 +95,6 @@ class DiscordGSM():
     async def query_servers(self):
         self.server_list = self.servers.refresh()
         server_count = self.servers.query()
-        self.print_to_console(f'{server_count} servers queried')
 
     # pre-query servers before ready
     @query_servers.before_loop
@@ -129,8 +128,6 @@ class DiscordGSM():
                     self.print_to_console(f'ERROR: Server: {server["address"]}:{server["port"]} failed to edit. \n{e}')
                 finally:
                     await asyncio.sleep(SEND_DELAY)
-       
-            self.print_to_console(f'{updated_count} messages updated')
         else:
             self.message_error_count = 0
             self.print_to_console(f'Message ERROR reached, refreshing...')
