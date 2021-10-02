@@ -82,8 +82,7 @@ class DiscordGSM():
     async def try_get_message_to_update(self, server):
         try:
             message = await client.get_channel(server["channel"]).fetch_message(server["message_id"])
-            #TODO: Missing logic to see if message has been deleted on the server
-            asyncio.sleep(2) #throttle
+            #TODO: Missing logic to see if message has been deleted on the server?
             return message
         except Exception as e:
             self.print_to_console(f'ERROR: fetch_message failed for server {server} \n{e}')
@@ -119,7 +118,7 @@ class DiscordGSM():
                 try:
                     # TODO: Something one line -> not working (m for m in self.messages if m.id == server["message_id"])
                     for m in self.messages:
-                        if m.id == server["message_id"]:
+                        if m.id == self.messages[server["message_id"]]:
                             message = m
                             break
 
