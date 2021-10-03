@@ -27,30 +27,30 @@ invite_link = f'https://discord.com/api/oauth2/authorize?client_id={clientid}&pe
 
 VERSION = "1.1.L"
 # Get Env
-PREFIX = os.getenv("DGSM_PREFIX")
+PREFIX = os.getenv("DGSM_PREFIX") or "!"
 ROLEID = os.getenv("DGSM_ROLEID")
-CUSTOM_IMAGE_URL = os.getenv("DGSM_CUSTOM_IMAGE_URL")
-REFRESH_RATE = int(os.getenv("DGSM_REFRESH_RATE"))
-PRESENCE_TYPE = int(os.getenv("DGSM_PRESENCE_TYPE"))
-PRESENCE_RATE = int(os.getenv("DGSM_PRESENCE_RATE"))
-SEND_DELAY = int(os.getenv("DGSM_SEND_DELAY"))
-ERROR_THRESHOLD = int(os.getenv("DGSM_ERROR_THRESHOLD"))
-FIELD_NAME = os.getenv("DGSM_FIELD_NAME")
-FIELD_STATUS = os.getenv("DGSM_FIELD_STATUS")
-FIELD_ADDRESS = os.getenv("DGSM_FIELD_ADDRESS")
-FIELD_PORT = os.getenv("DGSM_FIELD_PORT")
-FIELD_GAME = os.getenv("DGSM_FIELD_GAME")
-FIELD_CURRENTMAP = os.getenv("DGSM_FIELD_CURRENTMAP")
-FIELD_PLAYERS = os.getenv("DGSM_FIELD_PLAYERS")
-FIELD_COUNTRY = os.getenv("DGSM_FIELD_COUNTRY")
-FIELD_LASTUPDATE = os.getenv("DGSM_FIELD_LASTUPDATE")
-FIELD_CUSTOM = os.getenv("DGSM_FIELD_CUSTOM")
-FIELD_PASSWORD = os.getenv("DGSM_FIELD_PASSWORD")
-FIELD_ONLINE = os.getenv("DGSM_FIELD_ONLINE")
-FIELD_OFFLINE = os.getenv("DGSM_FIELD_OFFLINE")
-FIELD_UNKNOWN = os.getenv("DGSM_FIELD_UNKNOWN")
-FIELD_JOIN = os.getenv("DGSM_FIELD_JOIN")
-FIELD_LAUNCH = os.getenv("DGSM_FIELD_LAUNCH")
+CUSTOM_IMAGE_URL = os.getenv("DGSM_CUSTOM_IMAGE_URL") or "https://github.com/patrix87/DiscordLogGSM/blob/master/images/discordgsm.png?raw=true"
+REFRESH_RATE = int(os.getenv("DGSM_REFRESH_RATE")) or 15
+PRESENCE_TYPE = int(os.getenv("DGSM_PRESENCE_TYPE")) or 3
+PRESENCE_RATE = int(os.getenv("DGSM_PRESENCE_RATE")) or 60
+SEND_DELAY = int(os.getenv("DGSM_SEND_DELAY")) or 2
+ERROR_THRESHOLD = int(os.getenv("DGSM_ERROR_THRESHOLD")) or 0
+FIELD_NAME = os.getenv("DGSM_FIELD_NAME") or "Name"
+FIELD_STATUS = os.getenv("DGSM_FIELD_STATUS") or "Status"
+FIELD_ADDRESS = os.getenv("DGSM_FIELD_ADDRESS") or "Address"
+FIELD_PORT = os.getenv("DGSM_FIELD_PORT") or "Port"
+FIELD_GAME = os.getenv("DGSM_FIELD_GAME") or "Game"
+FIELD_CURRENTMAP = os.getenv("DGSM_FIELD_CURRENTMAP") or "Map"
+FIELD_PLAYERS = os.getenv("DGSM_FIELD_PLAYERS") or "Players"
+FIELD_COUNTRY = os.getenv("DGSM_FIELD_COUNTRY") or "Country"
+FIELD_LASTUPDATE = os.getenv("DGSM_FIELD_LASTUPDATE") or "Last Update"
+FIELD_CUSTOM = os.getenv("DGSM_FIELD_CUSTOM") or "Information"
+FIELD_PASSWORD = os.getenv("DGSM_FIELD_PASSWORD") or "Password"
+FIELD_ONLINE = os.getenv("DGSM_FIELD_ONLINE") or "Online"
+FIELD_OFFLINE = os.getenv("DGSM_FIELD_OFFLINE") or "Offline"
+FIELD_UNKNOWN = os.getenv("DGSM_FIELD_UNKNOWN") or "Unknown"
+FIELD_JOIN = os.getenv("DGSM_FIELD_JOIN") or "Join Server"
+FIELD_LAUNCH = os.getenv("DGSM_FIELD_LAUNCH") or "Launch Game"
 SPACER=u"\u200B"
 
 class DiscordGSM():
