@@ -5,6 +5,7 @@
         "address": "[string][mandatory] Relative server address.",
         "port": "[int][mandatory] Server Port.",
         "channel": "[int][mandatory] Discord channel id.",
+        "message_id": "[int][optional] Existing message id to be updated every loop",
         "image_url": "[string][optional] URL https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/93/Grass_Block_JE7_BE6.png",
         "custom": "[string][optional] Additionnal information message showed at the bottom of the server embed",
         "color": "[string][optional] RGB color code : #5b8731",

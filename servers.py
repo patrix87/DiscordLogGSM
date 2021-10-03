@@ -32,10 +32,14 @@ class Servers:
         
         #overwrite servers.json if a country is missing
         if is_edited:
-            with open("servers.json", "w", encoding="utf-8") as file:
-                json.dump(servers, file, ensure_ascii=False, indent=4)
+           self.update_server_file(servers)
 
         self.servers = servers 
+        return servers
+
+    def update_server_file(self, servers):
+        with open("servers.json", "w", encoding="utf-8") as file:
+            json.dump(servers, file, ensure_ascii=False, indent=4)
 
     # get servers data
     def get(self):
@@ -44,9 +48,9 @@ class Servers:
 
         return json.loads(data)
 
-    def get_distinct_servers(self):       
+    def get_distinct_server_count(self):       
         uniqueServers = [f'{server["address"]}:{str(server["port"])}' for server in self.servers]
-        return list(set(uniqueServers))
+        return len(list(set(uniqueServers)))
 
     def query(self):
         for server in self.servers:

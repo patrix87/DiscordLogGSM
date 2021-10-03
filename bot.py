@@ -3,6 +3,7 @@ import time
 import urllib
 import asyncio
 import sys
+import base64
 from datetime import datetime
 
 # discord
@@ -17,29 +18,37 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-VERSION = "1.0.L"
+# Check bot token and servers.json valid before start
+segs = os.getenv("DGSM_TOKEN").split(".")
+assert len(segs) == 3, "invalid token"
+#decode
+clientid = base64.b64decode(segs[0]).decode()
+invite_link = f'https://discord.com/api/oauth2/authorize?client_id={clientid}&permissions=339008&scope=bot'
+
+VERSION = "1.1.L"
 # Get Env
-PREFIX=os.getenv("DGSM_PREFIX")
-ROLEID=os.getenv("DGSM_ROLEID")
-CUSTOM_IMAGE_URL=os.getenv("DGSM_CUSTOM_IMAGE_URL")
-REFRESH_RATE=int(os.getenv("DGSM_REFRESH_RATE"))
-PRESENCE_TYPE=int(os.getenv("DGSM_PRESENCE_TYPE"))
-PRESENCE_RATE=int(os.getenv("DGSM_PRESENCE_RATE"))
-SEND_DELAY=int(os.getenv("DGSM_SEND_DELAY"))
-FIELD_NAME=os.getenv("DGSM_FIELD_NAME")
-FIELD_STATUS=os.getenv("DGSM_FIELD_STATUS")
-FIELD_ADDRESS=os.getenv("DGSM_FIELD_ADDRESS")
-FIELD_PORT=os.getenv("DGSM_FIELD_PORT")
-FIELD_GAME=os.getenv("DGSM_FIELD_GAME")
-FIELD_CURRENTMAP=os.getenv("DGSM_FIELD_CURRENTMAP")
-FIELD_PLAYERS=os.getenv("DGSM_FIELD_PLAYERS")
-FIELD_COUNTRY=os.getenv("DGSM_FIELD_COUNTRY")
-FIELD_LASTUPDATE=os.getenv("DGSM_FIELD_LASTUPDATE")
-FIELD_CUSTOM=os.getenv("DGSM_FIELD_CUSTOM")
-FIELD_PASSWORD=os.getenv("DGSM_FIELD_PASSWORD")
-FIELD_ONLINE=os.getenv("DGSM_FIELD_ONLINE")
-FIELD_OFFLINE=os.getenv("DGSM_FIELD_OFFLINE")
-FIELD_UNKNOWN=os.getenv("DGSM_FIELD_UNKNOWN")
+PREFIX = os.getenv("DGSM_PREFIX")
+ROLEID = os.getenv("DGSM_ROLEID")
+CUSTOM_IMAGE_URL = os.getenv("DGSM_CUSTOM_IMAGE_URL")
+REFRESH_RATE = int(os.getenv("DGSM_REFRESH_RATE"))
+PRESENCE_TYPE = int(os.getenv("DGSM_PRESENCE_TYPE"))
+PRESENCE_RATE = int(os.getenv("DGSM_PRESENCE_RATE"))
+SEND_DELAY = int(os.getenv("DGSM_SEND_DELAY"))
+ERROR_TRESHOLD = int(os.getenv("DGSM_ERROR_TRESHOLD"))
+FIELD_NAME = os.getenv("DGSM_FIELD_NAME")
+FIELD_STATUS = os.getenv("DGSM_FIELD_STATUS")
+FIELD_ADDRESS = os.getenv("DGSM_FIELD_ADDRESS")
+FIELD_PORT = os.getenv("DGSM_FIELD_PORT")
+FIELD_GAME = os.getenv("DGSM_FIELD_GAME")
+FIELD_CURRENTMAP = os.getenv("DGSM_FIELD_CURRENTMAP")
+FIELD_PLAYERS = os.getenv("DGSM_FIELD_PLAYERS")
+FIELD_COUNTRY = os.getenv("DGSM_FIELD_COUNTRY")
+FIELD_LASTUPDATE = os.getenv("DGSM_FIELD_LASTUPDATE")
+FIELD_CUSTOM = os.getenv("DGSM_FIELD_CUSTOM")
+FIELD_PASSWORD = os.getenv("DGSM_FIELD_PASSWORD")
+FIELD_ONLINE = os.getenv("DGSM_FIELD_ONLINE")
+FIELD_OFFLINE = os.getenv("DGSM_FIELD_OFFLINE")
+FIELD_UNKNOWN = os.getenv("DGSM_FIELD_UNKNOWN")
 SPACER=u"\u200B"
 
 class DiscordGSM():
@@ -48,19 +57,16 @@ class DiscordGSM():
         self.client = client
         self.servers = Servers()
         self.server_list = self.servers.get()
-        #number of failed attempt to post.
         self.message_error_count = self.current_display_server = 0
 
     def start(self):
-        self.print_to_console(f'Starting DiscordGSM v.{VERSION}...')
-        #Query Servers
-        self.query_servers.start()
-
+        self.print_to_console(f'Starting DiscordGSM v.{VERSION}')
+        self.update_messages.start()
+        
     def cancel(self):
-        self.query_servers.cancel()
-        self.update_servers.cancel()
+        self.update_messages.cancel()
         self.presence_load.cancel()
-
+        
     async def on_ready(self):
         # print info to console
         print("\n----------------")
@@ -68,90 +74,78 @@ class DiscordGSM():
         print(f'Client ID:\t{client.user.id}')
         app_info = await client.application_info()
         print(f'Owner ID:\t{app_info.owner.id} ({app_info.owner.name})')
+        print(f'Invite Link: \t{invite_link}')
+        print("----------------")
+        print(f'Querying {self.servers.get_distinct_server_count()} servers and updating {len(self.server_list)} messages every {REFRESH_RATE} minutes.')
         print("----------------\n")
-
-        #Update bot presence
         self.presence_load.start()
 
-        self.print_to_console(f'Query server and send discord embed every {REFRESH_RATE} minutes...')
-        #async refresh embed messages
-        await self.repost_servers()
-        #Wait one full loop then Start main update loop.
-        await asyncio.sleep(REFRESH_RATE*60)
-        self.update_servers.start()
-
-    def print_to_console(self, value):
-        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
-
-    # query the servers
     @tasks.loop(minutes=REFRESH_RATE)
-    async def query_servers(self):
-        self.servers.refresh()
-        self.server_list = self.servers.get()
-        server_count = self.servers.query()
-        self.print_to_console(f'{server_count} servers queried')
-
-    # pre-query servers before ready
-    @query_servers.before_loop
-    async def before_query_servers(self):
-        self.print_to_console("Pre-Query servers...")
-        server_count = self.servers.query()
-        self.print_to_console(f'{server_count} servers queried')
-        await client.wait_until_ready()
-        await self.on_ready()
-    
-    # send messages to discord
-    @tasks.loop(minutes=REFRESH_RATE)
-    async def update_servers(self):
-        if self.message_error_count < 20:
+    async def update_messages(self):
+        await self.query_servers()
+        if self.message_error_count < ERROR_TRESHOLD:
             updated_count = 0
-            for i in range(len(self.server_list)):
+            for server in self.server_list:
                 try:
-                    await self.messages[i].edit(embed=self.get_embed(self.server_list[i]))
+                    message = await self.try_get_message_to_update(server)
+                    if not message:
+                        self.message_error_count += 1
+                        continue
+                    await message.edit(embed=self.get_embed(server))
                     updated_count += 1
                 except Exception as e:
                     self.message_error_count += 1
-                    self.print_to_console(f'ERROR: message {i} failed to edit, message deleted or no permission. Server: {self.server_list[i]["address"]}:{self.server_list[i]["port"]}\n{e}')
+                    self.print_to_console(f'ERROR: Failed to edit message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
                 finally:
                     await asyncio.sleep(SEND_DELAY)
        
-            self.print_to_console(f'{updated_count} messages updated')
+            self.print_to_console(f'{updated_count} messages updated.')
         else:
             self.message_error_count = 0
-            self.print_to_console(f'Message ERROR reached, refreshing...')
-            await self.repost_servers()
+            self.print_to_console(f'ERROR: Message error treshold reached, reposting messages.')
+            await self.repost_messages()
+
+    # pre-query servers before ready
+    @update_messages.before_loop
+    async def before_update_messages(self):
+        try:    
+            self.print_to_console("Pre-Query servers.")
+            server_count = self.servers.query()
+            self.print_to_console(f'{server_count} servers pre-queried.')
+        except Exception as e:
+            self.print_to_console(f"Error pre-querying servers: \n{e}")
+        await client.wait_until_ready()
+        await self.on_ready()
 
     # remove old discord embed and send new discord embed
-    async def repost_servers(self):
-        # refresh servers.json cache
+    async def repost_messages(self):
         self.servers = Servers()
         self.server_list = self.servers.get()
-        self.messages = []
         repost_count = 0
         # remove old discord embed
         channels = [server["channel"] for server in self.server_list]
         channels = list(set(channels)) # remove duplicated channels
         for channel in channels:
             try:
-                await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
+               await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
             except Exception as e:
-                self.print_to_console(f'ERROR: Unable to delete messages.\n{e}')
+                self.print_to_console(f'ERROR: Unable to delete bot messages.\n{e}')
             finally:
                 await asyncio.sleep(SEND_DELAY)
 
         # send new discord embed
-        for s in self.server_list:
+        for server in self.server_list:
             try:
-                message = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
-                self.messages.append(message)
+                message = await client.get_channel(server["channel"]).send(embed=self.get_embed(server))
+                server["message_id"] = message.id
                 repost_count += 1
             except Exception as e:
                 self.message_error_count += 1
-                self.print_to_console(f'ERROR: message fail to send, no permission. Server: {s["address"]}:{s["port"]}\n{e}')
+                self.print_to_console(f'ERROR: Failed to send message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
             finally:
+                self.servers.update_server_file(self.server_list)
                 await asyncio.sleep(SEND_DELAY)
-
-        self.print_to_console(f'{repost_count} messages reposted')
+        self.print_to_console(f'{repost_count} messages reposted.')
     
     # refresh discord presence
     @tasks.loop(minutes=PRESENCE_RATE)
@@ -160,7 +154,7 @@ class DiscordGSM():
         if len(self.server_list) == 0:
             activity_text = f'Command: {PREFIX}dgsm'
         if PRESENCE_TYPE <= 1:
-            activity_text = f'{len(self.servers.get_distinct_servers())} game servers'
+            activity_text = f'{self.servers.get_distinct_server_count()} game servers'
         elif PRESENCE_TYPE == 2:
             total_activeplayers = total_maxplayers = 0
             for server in self.server_list:
@@ -191,10 +185,31 @@ class DiscordGSM():
             except Exception as e:
                 self.print_to_console(f'ERROR: Unable to update presence.\n{e}')
 
+    def print_to_console(self, value):
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
+
+    async def try_get_message_to_update(self, server):
+        try:
+            message = await client.get_channel(server["channel"]).fetch_message(server["message_id"])
+            return message
+        except Exception as e:
+            self.print_to_console(f'ERROR: Failed to fetch message for server: {self.get_server_info(server)}. \n{e}')
+            return None
+        finally:
+            await asyncio.sleep(SEND_DELAY)
+
+    async def query_servers(self):
+        self.server_list = self.servers.refresh()
+        self.servers.query()
+        self.print_to_console(f'{self.servers.get_distinct_server_count()} servers queried.')
+
     def get_value(self, dataset, field, default = None):
         if type(dataset) != dict or field not in dataset or dataset[field] is None or dataset[field] == "": 
             return default
         return dataset[field]
+
+    def get_server_info(self, server):
+        return self.get_value(server, "comment", f'{server["address"]}:{server["port"]}')
 
     def get_embed(self, server):
         server_cache = ServerCache(server["address"], server["port"])
@@ -253,8 +268,7 @@ class DiscordGSM():
 
         embed.set_footer(text=f'DiscordGSM v.{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}{SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
-        return embed
-        
+        return embed    
 
     def determineColor(self, server, data, cache_status):
         players = self.get_value(data, "players", "?")  
