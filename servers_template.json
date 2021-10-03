@@ -6,7 +6,7 @@
         "port": "[int][mandatory] Server Port.",
         "channel": "[int][mandatory] Discord channel id.",
         "message_id": "[int][optional][autofill] id of the message to update.",
-        "image_url": "[string][optional] URL https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/93/Grass_Block_JE7_BE6.png",
+        "image_url": "[string][optional] URL of the Thumbnail image URL https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/93/Grass_Block_JE7_BE6.png",
         "custom": "[string][optional] Additionnal information message showed at the bottom of the server embed",
         "steam_id": "[int][optional] Steam App ID of the game the server is running for. Not the steam id of the dedicated server.",
         "direct_join": "[bool][optionnal] Set the link to directly join the server instead of just launching the game. Steam_id must be set.",
