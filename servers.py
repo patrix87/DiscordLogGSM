@@ -48,9 +48,9 @@ class Servers:
 
         return json.loads(data)
 
-    def get_distinct_servers(self):       
+    def get_distinct_server_count(self):       
         uniqueServers = [f'{server["address"]}:{str(server["port"])}' for server in self.servers]
-        return list(set(uniqueServers))
+        return len(list(set(uniqueServers)))
 
     def query(self):
         for server in self.servers:

@@ -3,6 +3,7 @@ import time
 import urllib
 import asyncio
 import sys
+import base64
 from datetime import datetime
 
 # discord
@@ -17,7 +18,14 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-VERSION = "1.0.L"
+# Check bot token and servers.json valid before start
+segs = os.getenv("DGSM_TOKEN").split(".")
+assert len(segs) == 3, "invalid token"
+#decode
+clientid = base64.b64decode(segs[0]).decode()
+invite_link = f'https://discord.com/api/oauth2/authorize?client_id={clientid}&permissions=339008&scope=bot'
+
+VERSION = "1.1.L"
 # Get Env
 PREFIX = os.getenv("DGSM_PREFIX")
 ROLEID = os.getenv("DGSM_ROLEID")
@@ -52,11 +60,10 @@ class DiscordGSM():
         self.message_error_count = self.current_display_server = 0
 
     def start(self):
-        self.print_to_console(f'Starting DiscordGSM v.{VERSION}...')
-        self.main_routine.start()
+        self.print_to_console(f'Starting DiscordGSM v.{VERSION}')
+        self.update_messages.start()
         
     def cancel(self):
-        self.main_routine.cancel()
         self.update_messages.cancel()
         self.presence_load.cancel()
         
@@ -67,85 +74,53 @@ class DiscordGSM():
         print(f'Client ID:\t{client.user.id}')
         app_info = await client.application_info()
         print(f'Owner ID:\t{app_info.owner.id} ({app_info.owner.name})')
+        print(f'Invite Link: \t{invite_link}')
+        print("----------------")
+        print(f'Querying {self.servers.get_distinct_server_count()} servers and updating {len(self.server_list)} messages every {REFRESH_RATE} minutes.')
         print("----------------\n")
-        self.print(f'Querying {len(self.server_list)} servers and updating messages every {REFRESH_RATE} minutes...')  
-        print("----------------\n")
-
         self.presence_load.start()
-        self.update_messages.start()
-
-    def print_to_console(self, value):
-        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
-
-    async def try_get_message_to_update(self, server):
-        try:
-            message = await client.get_channel(server["channel"]).fetch_message(server["message_id"])
-            #TODO: Missing logic to see if message has been deleted on the server?
-            return message
-        except Exception as e:
-            self.print_to_console(f'ERROR: fetch_message failed for server {server} \n{e}')
-            return None
-        finally:
-            await asyncio.sleep(SEND_DELAY)
-
-    async def query_servers(self):
-        self.server_list = self.servers.refresh()
-        server_count = self.servers.query()
-        self.print_to_console(f'{server_count} servers queried')
-
-    # query the servers
-    @tasks.loop(minutes=REFRESH_RATE)
-    async def main_routine(self):
-        self.print_to_console(f'{len(self.server_list)} servers being watched')
-
-    # pre-query servers before ready
-    @main_routine.before_loop
-    async def before_main_routine(self):
-        try:    
-            self.print_to_console("Pre-Query servers...")
-            server_count = self.servers.query()
-            self.print_to_console(f'{server_count} servers pre-queried')
-        except Exception as e:
-            self.print_to_console(f"Error pre-querying servers: \n{e}")
-
-        await client.wait_until_ready()
-        await self.on_ready()
 
     @tasks.loop(minutes=REFRESH_RATE)
     async def update_messages(self):
-        # Force refresh every update_messages loop for quick info modification
-        self.query_servers()
-        self.messages = [await self.try_get_message_to_update(server) for server in self.server_list]
-
+        await self.query_servers()
         if self.message_error_count < ERROR_TRESHOLD:
             updated_count = 0
             for server in self.server_list:
                 try:
-                    # TODO: Something one line -> not working (m for m in self.messages if m.id == server["message_id"])
-                    for m in self.messages:
-                        if m.id == server["message_id"]:
-                            message = m
-                            break
-
+                    message = await self.try_get_message_to_update(server)
+                    if not message:
+                        self.message_error_count += 1
+                        continue
                     await message.edit(embed=self.get_embed(server))
                     updated_count += 1
                 except Exception as e:
                     self.message_error_count += 1
-                    self.print_to_console(f'ERROR: Server: {server["address"]}:{server["port"]} failed to edit. \n{e}')
+                    self.print_to_console(f'ERROR: Failed to edit message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
                 finally:
                     await asyncio.sleep(SEND_DELAY)
        
-            self.print_to_console(f'{updated_count} messages updated')
+            self.print_to_console(f'{updated_count} messages updated.')
         else:
             self.message_error_count = 0
-            self.print_to_console(f'Message ERROR reached, refreshing...')
+            self.print_to_console(f'ERROR: Message error treshold reached, reposting messages.')
             await self.repost_messages()
+
+    # pre-query servers before ready
+    @update_messages.before_loop
+    async def before_update_messages(self):
+        try:    
+            self.print_to_console("Pre-Query servers.")
+            server_count = self.servers.query()
+            self.print_to_console(f'{server_count} servers pre-queried.')
+        except Exception as e:
+            self.print_to_console(f"Error pre-querying servers: \n{e}")
+        await client.wait_until_ready()
+        await self.on_ready()
 
     # remove old discord embed and send new discord embed
     async def repost_messages(self):
         self.servers = Servers()
         self.server_list = self.servers.get()
-        self.messages = []
         repost_count = 0
         # remove old discord embed
         channels = [server["channel"] for server in self.server_list]
@@ -154,25 +129,23 @@ class DiscordGSM():
             try:
                await client.get_channel(channel).purge(check=lambda m: m.author==client.user)
             except Exception as e:
-                self.print_to_console(f'ERROR: Unable to delete messages.\n{e}')
+                self.print_to_console(f'ERROR: Unable to delete bot messages.\n{e}')
             finally:
                 await asyncio.sleep(SEND_DELAY)
 
         # send new discord embed
-        for s in self.server_list:
+        for server in self.server_list:
             try:
-                message = await client.get_channel(s["channel"]).send(embed=self.get_embed(s))
-                self.messages.append(message)
-                s["message_id"] = message.id
+                message = await client.get_channel(server["channel"]).send(embed=self.get_embed(server))
+                server["message_id"] = message.id
                 repost_count += 1
             except Exception as e:
                 self.message_error_count += 1
-                self.print_to_console(f'ERROR: message fail to send, no permission. Server: {s["address"]}:{s["port"]}\n{e}')
+                self.print_to_console(f'ERROR: Failed to send message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
             finally:
                 self.servers.update_server_file(self.server_list)
                 await asyncio.sleep(SEND_DELAY)
-
-        self.print_to_console(f'{repost_count} messages reposted')
+        self.print_to_console(f'{repost_count} messages reposted.')
     
     # refresh discord presence
     @tasks.loop(minutes=PRESENCE_RATE)
@@ -181,7 +154,7 @@ class DiscordGSM():
         if len(self.server_list) == 0:
             activity_text = f'Command: {PREFIX}dgsm'
         if PRESENCE_TYPE <= 1:
-            activity_text = f'{len(self.servers.get_distinct_servers())} game servers'
+            activity_text = f'{self.servers.get_distinct_server_count()} game servers'
         elif PRESENCE_TYPE == 2:
             total_activeplayers = total_maxplayers = 0
             for server in self.server_list:
@@ -212,10 +185,31 @@ class DiscordGSM():
             except Exception as e:
                 self.print_to_console(f'ERROR: Unable to update presence.\n{e}')
 
+    def print_to_console(self, value):
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
+
+    async def try_get_message_to_update(self, server):
+        try:
+            message = await client.get_channel(server["channel"]).fetch_message(server["message_id"])
+            return message
+        except Exception as e:
+            self.print_to_console(f'ERROR: Failed to fetch message for server: {self.get_server_info(server)}. \n{e}')
+            return None
+        finally:
+            await asyncio.sleep(SEND_DELAY)
+
+    async def query_servers(self):
+        self.server_list = self.servers.refresh()
+        self.servers.query()
+        self.print_to_console(f'{self.servers.get_distinct_server_count()} servers queried.')
+
     def get_value(self, dataset, field, default = None):
         if type(dataset) != dict or field not in dataset or dataset[field] is None or dataset[field] == "": 
             return default
         return dataset[field]
+
+    def get_server_info(self, server):
+        return self.get_value(server, "comment", f'{server["address"]}:{server["port"]}')
 
     def get_embed(self, server):
         server_cache = ServerCache(server["address"], server["port"])
