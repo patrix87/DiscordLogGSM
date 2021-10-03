@@ -108,12 +108,7 @@ class DiscordGSM():
     # pre-query servers before ready
     @update_messages.before_loop
     async def before_update_messages(self):
-        try:    
-            self.print_to_console("Pre-Query servers.")
-            server_count = self.servers.query()
-            self.print_to_console(f'{server_count} servers pre-queried.')
-        except Exception as e:
-            self.print_to_console(f"Error pre-querying servers: \n{e}")
+        await self.query_servers()
         await client.wait_until_ready()
         await self.on_ready()
 
@@ -199,8 +194,11 @@ class DiscordGSM():
             await asyncio.sleep(SEND_DELAY)
 
     async def query_servers(self):
-        self.server_list = self.servers.refresh()
-        self.servers.query()
+        try:    
+            self.server_list = self.servers.refresh()
+            self.servers.query()
+        except Exception as e:
+            self.print_to_console(f"Error Querying servers: \n{e}")
         self.print_to_console(f'{self.servers.get_distinct_server_count()} servers queried.')
 
     def get_value(self, dataset, field, default = None):
