@@ -107,18 +107,18 @@ class ServerCache:
 
     def get_status(self):
         try:
-            with open(f"cache/{self.file_name}.txt", "r", encoding="utf-8") as file:
+            with open(f'cache/{self.file_name}.txt', "r", encoding="utf-8") as file:
                 return file.read()
         except:
             return False
 
     def set_status(self, status):
-        with open(f"cache/{self.file_name}.txt", "w", encoding="utf-8") as file:
+        with open(f'cache/{self.file_name}.txt', "w", encoding="utf-8") as file:
             file.write(str(status))
 
     def get_data(self):
         try:
-            with open(f"cache/{self.file_name}.json", "r", encoding="utf-8") as file:
+            with open(f'cache/{self.file_name}.json', "r", encoding="utf-8") as file:
                 return json.load(file)
         except EnvironmentError:
             return False
@@ -137,5 +137,5 @@ class ServerCache:
 
         self.set_status("Online")
 
-        with open(f"cache/{self.file_name}.json", "w", encoding="utf-8") as file:
+        with open(f'cache/{self.file_name}.json', "w", encoding="utf-8") as file:
             json.dump(data, file, ensure_ascii=False, indent=4)

@@ -199,7 +199,7 @@ class DiscordGSM():
             self.server_list = self.servers.refresh()
             self.servers.query()
         except Exception as e:
-            self.print_to_console(f"Error Querying servers: \n{e}")
+            self.print_to_console(f'Error Querying servers: \n{e}')
         self.print_to_console(f'{self.servers.get_distinct_server_count()} servers queried.')
 
     def get_value(self, dataset, field, default = None):
