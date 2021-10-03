@@ -34,7 +34,7 @@ REFRESH_RATE = int(os.getenv("DGSM_REFRESH_RATE"))
 PRESENCE_TYPE = int(os.getenv("DGSM_PRESENCE_TYPE"))
 PRESENCE_RATE = int(os.getenv("DGSM_PRESENCE_RATE"))
 SEND_DELAY = int(os.getenv("DGSM_SEND_DELAY"))
-ERROR_TRESHOLD = int(os.getenv("DGSM_ERROR_TRESHOLD"))
+ERROR_THRESHOLD = int(os.getenv("DGSM_ERROR_THRESHOLD"))
 FIELD_NAME = os.getenv("DGSM_FIELD_NAME")
 FIELD_STATUS = os.getenv("DGSM_FIELD_STATUS")
 FIELD_ADDRESS = os.getenv("DGSM_FIELD_ADDRESS")
@@ -49,6 +49,8 @@ FIELD_PASSWORD = os.getenv("DGSM_FIELD_PASSWORD")
 FIELD_ONLINE = os.getenv("DGSM_FIELD_ONLINE")
 FIELD_OFFLINE = os.getenv("DGSM_FIELD_OFFLINE")
 FIELD_UNKNOWN = os.getenv("DGSM_FIELD_UNKNOWN")
+FIELD_JOIN = os.getenv("DGSM_FIELD_JOIN")
+FIELD_LAUNCH = os.getenv("DGSM_FIELD_LAUNCH")
 SPACER=u"\u200B"
 
 class DiscordGSM():
@@ -83,27 +85,26 @@ class DiscordGSM():
     @tasks.loop(minutes=REFRESH_RATE)
     async def update_messages(self):
         await self.query_servers()
-        if self.message_error_count < ERROR_TRESHOLD:
-            updated_count = 0
-            for server in self.server_list:
-                try:
-                    message = await self.try_get_message_to_update(server)
-                    if not message:
-                        self.message_error_count += 1
-                        continue
-                    await message.edit(embed=self.get_embed(server))
-                    updated_count += 1
-                except Exception as e:
+        updated_count = 0
+        for server in self.server_list:
+            if self.message_error_count > ERROR_THRESHOLD:
+                self.message_error_count = 0
+                self.print_to_console(f'ERROR: Message error threshold reached, reposting messages.')
+                await self.repost_messages()
+                break
+            try:
+                message = await self.try_get_message_to_update(server)
+                if not message:
                     self.message_error_count += 1
-                    self.print_to_console(f'ERROR: Failed to edit message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
-                finally:
-                    await asyncio.sleep(SEND_DELAY)
-       
-            self.print_to_console(f'{updated_count} messages updated.')
-        else:
-            self.message_error_count = 0
-            self.print_to_console(f'ERROR: Message error treshold reached, reposting messages.')
-            await self.repost_messages()
+                    continue
+                await message.edit(embed=self.get_embed(server))
+                updated_count += 1
+            except Exception as e:
+                self.message_error_count += 1
+                self.print_to_console(f'ERROR: Failed to edit message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
+            finally:
+                await asyncio.sleep(SEND_DELAY)
+        self.print_to_console(f'{updated_count} messages updated.')
 
     # pre-query servers before ready
     @update_messages.before_loop
@@ -236,6 +237,8 @@ class DiscordGSM():
         country = self.get_value(server, "country")
         map = None if  self.get_value(server, "map") == False else self.get_value(server, "map") or self.get_value(data, "map")
         image_url = self.get_value(server, "image_url")
+        steam_id = self.get_value(server, "steam_id")
+        direct_join = self.get_value(server, "direct_join")
         color = self.determineColor(server, data, cache_status)
 
         # Build embed
@@ -261,12 +264,19 @@ class DiscordGSM():
             embed.add_field(name=FIELD_CURRENTMAP, value=map, inline=True)
         if map or country:
             embed.add_field(name=SPACER, value=SPACER, inline=True)
+        if steam_id:
+            if direct_join:
+                if password:
+                    embed.add_field(name=FIELD_JOIN, value=f'steam://connect/{data["address"]}:{port}/{password}', inline=False)
+                else:
+                    embed.add_field(name=FIELD_JOIN, value=f'steam://connect/{data["address"]}:{port}', inline=False)
+            else:
+                embed.add_field(name=FIELD_LAUNCH, value=f'steam://rungameid/{steam_id}', inline=False)
         if image_url:
             embed.set_thumbnail(url=image_url)
-
         embed.set_footer(text=f'DiscordGSM v.{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}{SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
-        return embed    
+        return embed
 
     def determineColor(self, server, data, cache_status):
         players = self.get_value(data, "players", "?")  
