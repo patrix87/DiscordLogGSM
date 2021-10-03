@@ -53,13 +53,12 @@ class DiscordGSM():
 
     def start(self):
         self.print_to_console(f'Starting DiscordGSM v.{VERSION}...')
-        self.query_servers.start()
+        self.main_routine.start()
         
     def cancel(self):
-        self.query_servers.cancel()
+        self.main_routine.cancel()
         self.update_messages.cancel()
         self.presence_load.cancel()
-
         
     async def on_ready(self):
         # print info to console
@@ -69,12 +68,11 @@ class DiscordGSM():
         app_info = await client.application_info()
         print(f'Owner ID:\t{app_info.owner.id} ({app_info.owner.name})')
         print("----------------\n")
+        self.print(f'Querying {len(self.server_list)} servers and updating messages every {REFRESH_RATE} minutes...')  
+        print("----------------\n")
 
-        self.print_to_console(f'Querying {len(self.server_list)} servers and updating messages every {REFRESH_RATE} minutes...')  
-        
         self.presence_load.start()
         self.update_messages.start()
-
 
     def print_to_console(self, value):
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S: ") + value)
@@ -90,26 +88,33 @@ class DiscordGSM():
         finally:
             await asyncio.sleep(SEND_DELAY)
 
-    # query the servers
-    @tasks.loop(minutes=REFRESH_RATE)
     async def query_servers(self):
         self.server_list = self.servers.refresh()
         server_count = self.servers.query()
         self.print_to_console(f'{server_count} servers queried')
 
+    # query the servers
+    @tasks.loop(minutes=REFRESH_RATE)
+    async def main_routine(self):
+        self.print_to_console(f'{len(self.server_list)} servers being watched')
+
     # pre-query servers before ready
-    @query_servers.before_loop
-    async def before_query_servers(self):
-        self.print_to_console("Pre-Query servers...")
-        server_count = self.servers.query()
-        self.print_to_console(f'{server_count} servers pre-queried')
+    @main_routine.before_loop
+    async def before_main_routine(self):
+        try:    
+            self.print_to_console("Pre-Query servers...")
+            server_count = self.servers.query()
+            self.print_to_console(f'{server_count} servers pre-queried')
+        except Exception as e:
+            self.print_to_console(f"Error pre-querying servers: \n{e}")
+
         await client.wait_until_ready()
         await self.on_ready()
 
     @tasks.loop(minutes=REFRESH_RATE)
     async def update_messages(self):
         # Force refresh every update_messages loop for quick info modification
-        self.server_list = self.servers.refresh()
+        self.query_servers()
         self.messages = [await self.try_get_message_to_update(server) for server in self.server_list]
 
         if self.message_error_count < ERROR_TRESHOLD:
@@ -269,8 +274,7 @@ class DiscordGSM():
 
         embed.set_footer(text=f'DiscordGSM v.{VERSION} | Game Server Monitor | {FIELD_LASTUPDATE}: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}{SPACER}', icon_url=CUSTOM_IMAGE_URL)
         
-        return embed
-        
+        return embed    
 
     def determineColor(self, server, data, cache_status):
         players = self.get_value(data, "players", "?")  
