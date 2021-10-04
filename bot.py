@@ -89,19 +89,20 @@ class DiscordGSM():
         for server in self.server_list:
             if self.message_error_count > ERROR_THRESHOLD:
                 self.message_error_count = 0
-                self.print_to_console(f'ERROR: Message error threshold reached, reposting messages.')
+                self.print_to_console(f'ERROR: update_messages error threshold({ERROR_THRESHOLD}) reached. Reposting messages.')
                 await self.repost_messages()
                 break
             try:
                 message = await self.try_get_message_to_update(server)
                 if not message:
                     self.message_error_count += 1
+                    self.print_to_console(f'\n {self.message_error_count} error(s) in update_messages().')
                     continue
                 await message.edit(embed=self.get_embed(server))
                 updated_count += 1
             except Exception as e:
                 self.message_error_count += 1
-                self.print_to_console(f'ERROR: Failed to edit message for server: {self.get_server_info(server)}. Missing permissions ?\n{e}')
+                self.print_to_console(f'ERROR: Failed to edit message for server: {self.get_server_info(server)}. \n {self.message_error_count} error(s) in update_messages(). Missing permissions?\n{e}')
             finally:
                 await asyncio.sleep(SEND_DELAY)
         self.print_to_console(f'{updated_count} messages updated.')
@@ -187,6 +188,9 @@ class DiscordGSM():
     async def try_get_message_to_update(self, server):
         try:
             message = await client.get_channel(server["channel"]).fetch_message(server["message_id"])
+            if not message:
+                self.print_to_console(f'ERROR: Failed to fetch message for server: {self.get_server_info(server)}. \n{e}')
+                return None
             return message
         except Exception as e:
             self.print_to_console(f'ERROR: Failed to fetch message for server: {self.get_server_info(server)}. \n{e}')
