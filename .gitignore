@@ -1,8 +1,0 @@
-__pycache__/
-cache/*.txt
-cache/*.json
-node_modules
-venv/
-*.env
-package-lock.json
-servers.json
